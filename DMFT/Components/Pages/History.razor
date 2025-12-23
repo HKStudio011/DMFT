@@ -27,7 +27,7 @@
   </thead>
   <tbody>
     @{ var hist = HistoryContainer.Links
-            .Where(l => l.Status == StatusMessage.Success || l.Status == StatusMessage.Canceled || l.Status == StatusMessage.Error)
+            .Where(l => l.Status == StatusMessage.Success || l.Status == StatusMessage.Canceled || l.Status >= StatusMessage.Error)
             .ToList(); }
     @for (int i = 0; i < hist.Count; i++)
     {
