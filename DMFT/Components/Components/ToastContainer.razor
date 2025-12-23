@@ -1,0 +1,65 @@
+@using DMFT.Model
+@inject ToastService Toast
+@implements IDisposable
+
+@using System.Linq
+
+<div class="toast-container" style="@ContainerStyle">
+    @foreach (var t in toasts.Where(x => x.Scope == Scope))
+    {
+        <div class="toast align-items-center show" role="status" aria-live="polite" style="min-width: 250px; background-color: rgba(0,0,0,0.8); color: white; padding: 0.75rem; border-radius: 0.5rem;">
+            <div class="d-flex align-items-center">
+                <span class="me-2">@GetIcon(t.Level)</span>
+                <div>@t.Message</div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private class ToastItem { public string Message {get;set;} public ToastLevel Level{get;set;} public Guid Id{get;set;} = Guid.NewGuid(); public string? Scope {get;set;} }
+    private List<ToastItem> toasts = new();
+    [Parameter] public string Scope {get;set;} = "Main";
+
+    private string ContainerStyle => Scope == "Main" ?
+        "position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; align-items: flex-end;"
+        :
+        "position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; align-items: flex-end;";
+
+    protected override void OnInitialized()
+    {
+        Toast.OnToast += ShowToast;
+    }
+
+    public void Dispose()
+    {
+        Toast.OnToast -= ShowToast;
+    }
+
+    private void ShowToast(string message, ToastLevel level, string? scope)
+    {
+        var t = new ToastItem { Message = message, Level = level, Scope = scope ?? "Main" };
+        toasts.Add(t);
+        InvokeAsync(StateHasChanged);
+        // auto dismiss after 3 seconds
+        _ = DismissAfterAsync(t.Id, 3000);
+    }
+
+    private async System.Threading.Tasks.Task DismissAfterAsync(Guid id, int delayMs)
+    {
+        await System.Threading.Tasks.Task.Delay(delayMs);
+        var toRemove = toasts.Find(t => t.Id == id);
+        if (toRemove != null) {
+            toasts.Remove(toRemove);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private string GetIcon(ToastLevel level) => level switch
+    {
+        ToastLevel.Success => "✓",
+        ToastLevel.Warning => "!",
+        ToastLevel.Error => "✖",
+        _ => "i"
+    };
+}

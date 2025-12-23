@@ -1,0 +1,28 @@
+<div>
+    <ModalBase Title="Add Link" @ref="modal">
+        <BodyContent>
+            <InputTextArea @bind-Value="content" class="form-control" placeholder="Add link"></InputTextArea>
+        </BodyContent>
+        <FooterContent>
+            <button class="btn btn-primary" onclick="@Add">Add</button>
+        </FooterContent>
+    </ModalBase>
+</div>
+
+@code {
+private ModalBase? modal;
+    public string content { get; private set; } = string.Empty;
+    [Parameter] public EventCallback<string> OnAdd { get; set; }
+
+public void Show()
+    {
+        modal?.Show();
+    }
+
+private void Add()
+    {
+        modal?.Close();
+        OnAdd.InvokeAsync(content);
+        content = "";
+    }
+}

@@ -1,0 +1,40 @@
+@if (IsVisible)
+{
+    <div class="css-loader-overlay">
+        <div class="css-loader-container">
+            <div class="css-loader @(UsePulseLoader ? "pulse" : "")"></div>
+            <div class="css-loader-message">@Message</div>
+            @if (!UsePulseLoader)
+            {
+                <div class="css-loader-dots">
+                    <span class="dot">.</span>
+                    <span class="dot">.</span>
+                    <span class="dot">.</span>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] 
+    public string Message { get; set; } = "Loading data, please wait...";
+    
+    [Parameter] 
+    public bool IsVisible { get; set; }
+
+    [Parameter] 
+    public bool UsePulseLoader { get; set; } = false;
+
+    public void Show()
+    {
+        IsVisible = true;
+        StateHasChanged();
+    }
+
+    public void Hide()
+    {
+        IsVisible = false;
+        StateHasChanged();
+    }
+}

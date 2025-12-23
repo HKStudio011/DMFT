@@ -1,0 +1,361 @@
+@page "/" 
+@using System.Threading.Tasks
+@inject MainContainer Container
+@inject IDownloadEngineAdapter DownloadEngine
+@inject ITikTokDownloaderService TikTokDownloaderService
+@inject IDownloadQueue DownloadQueue
+@inject ToastService Toast
+@inject HistoryContainer HistoryContainer
+@inject SeleniumServices SeleniumServices
+@implements IDisposable
+
+<div class="vh-100 overflow-auto">
+    <!-- Loading Modal -->
+    <LoadingModal @ref="loadingModal" IsVisible="@Container.IsLoading" Message="Đang tải dữ liệu, vui lòng chờ..."></LoadingModal>
+    
+    <!-- UI: download path settings -->
+    <div class="p-2 border rounded h-auto mb-3 bg-light">
+        <div class="row g-2 align-items-center">
+            <div class="col-auto">
+                <strong>Download Path</strong>
+            </div>
+            <div class="col">
+                <input class="form-control" @bind-value="pathInput" placeholder="Default download path" />
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-outline-info" @onclick="SavePath">Save Path</button>
+            </div>
+        </div>
+        <div class="mt-1 text-muted" style="font-size:smaller;">Current: @pathInput</div>
+    </div>
+    <div class="h-75">
+        <!-- Top section: list of LinkInfo -->
+        <AddModal @ref="addModal" OnAdd="OnAdd"></AddModal>
+        <button class="btn btn-primary mb-2" @onclick="AddClick">Add</button>
+        <button class="btn btn-success mb-2" @onclick="DownloadAll">Download All</button>
+        <button class="btn btn-warning mb-2" @onclick="ClearAllClick">Clear All</button>
+        <div class="mb-4 h-50 overflow-auto">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th class="w-auto" scope="col">#</th>
+                            <th class="w-25" scope="col">Link</th>
+                            <th scope="col">Time</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Mode</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-group-divider">
+                        @for (int i = 0; i < Container.Links.Count; i++)
+                        {
+                            var item = Container.Links[i];
+                            bool isSelected = item == SelectedLink;
+                            string rowClass = isSelected ? "table-active" : "";
+                            <tr class="@rowClass" @onclick="@(() => SelectLink(item))" style="cursor: pointer;">
+                                <th scope="row">@(i + 1)</th>
+                                <td>@item.Url</td>
+                                <td>@(item.Time.ToShortDateString() + " " + item.Time.ToShortTimeString())</td>
+                                <td>@StatusBadge(item.Status)</td>
+                                <td>
+                                    <select class="form-select form-select-sm" @bind="item.DownloadMode" aria-label="Download mode">
+                                        <option value="Video">Video</option>
+                                        <option value="AudioOnly">Audio Only</option>
+                                        <option value="AudioOriginOnly">Audio Origin</option>
+                                        <option value="VideoAndAudioOrigin">Video + Audio Origin</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        @if (item.Status >= StatusMessage.Error)
+                                        {
+                                            <button class="btn btn-sm btn-outline-primary" @onclick="@(async () => await ReInstall(item))">ReInstall</button>
+                                        }
+                                        else if (item.Status == StatusMessage.Waiting)
+                                        {
+                                            <button class="btn btn-sm btn-outline-secondary" disabled>In Queue</button>
+                                        }
+                                        else if (item.Status != StatusMessage.Downloading && item.Status != StatusMessage.Success)
+                                        {
+                                            <button class="btn btn-sm btn-outline-primary" @onclick="@(async () => await StartSingleDownload(item))">Download</button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-sm btn-outline-secondary" disabled>Downloading</button>
+                                        }
+                                        @if (item.Status != StatusMessage.Downloading)
+                                        {
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="@(async () => await CancelSingle(item))">Cancel</button>
+                                            <button class="btn btn-sm btn-outline-warning" @onclick="@(async () => await ClearItem(item))">Clear</button>
+                                        }
+                                        
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mt-4 row">
+            <div class="col-md-6">
+                <h5>Currently Downloading</h5>
+                <div class="mb-2">
+                    <button class="btn btn-outline-danger btn-sm" @onclick="@(async () => await CancelCurrentDownloading())">Cancel Current</button>
+                </div>
+                @{
+                    var downloadingLink = Container.Links.FirstOrDefault(l => l.Status == StatusMessage.Downloading);
+                }
+                @if (downloadingLink != null)
+                {
+                    var link = downloadingLink;
+                    <div class="card" style="width:100%">
+                        @if (!string.IsNullOrWhiteSpace(link.ThumbnailUrl))
+                        {
+                            <img class="card-img-top" src="@link.ThumbnailUrl" alt="Thumbnail" style="max-height:180px;object-fit:cover" />
+                        }
+                        <div class="card-body">
+                            <h5 class="card-title">@link.TitleDescription</h5>
+                            <p class="mb-1"><strong>VideoId:</strong> @link.VideoId</p>
+                            <p class="mb-1"><strong>URL:</strong> <a href="@link.OriginalUrl" target="_blank">@link.OriginalUrl</a></p>
+                            <p class="mb-1"><strong>Mode:</strong> @link.DownloadMode</p>
+                            <p class="mb-1"><strong>Status:</strong> @StatusBadge(link.Status)</p>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="card text-center" style="padding:1rem; height:100%; display:flex; align-items:center; justify-content:center;">
+                        Không có link nào đang được tải.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+@code {
+
+    private AddModal? addModal;
+    private LoadingModal? loadingModal;
+    private LinkInfo? SelectedLink;
+    private string? pathInput;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Container != null)
+            Container.OnLoadingStateChanged += LoadingStateChanged;
+        if (DownloadQueue != null)
+            DownloadQueue.OnQueueUpdated += LoadingStateChanged;
+        await DownloadSettings.LoadAsync();
+        pathInput = DownloadSettings.DefaultPath ?? string.Empty;
+
+    }
+
+    public void Dispose()
+    {
+        if (Container != null)
+            Container.OnLoadingStateChanged -= LoadingStateChanged;
+        if (DownloadQueue != null)
+            DownloadQueue.OnQueueUpdated -= LoadingStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && Container.IsLoading)
+        {
+            await Container.LoadContainerAsync();
+            // load path settings after initial data load
+            StateHasChanged();
+        }
+
+    }
+
+    // UI helpers
+    public Microsoft.AspNetCore.Components.MarkupString StatusBadge(int code)
+    {
+        string label, color;
+        switch (code)
+        {
+            case StatusMessage.Success: label = "Success"; color = "success"; break;
+            case StatusMessage.Canceled: label = "Canceled"; color = "secondary"; break;
+            case StatusMessage.Downloading: label = "Downloading"; color = "primary"; break;
+            case StatusMessage.Waiting: label = "Waiting"; color = "warning"; break;
+            case StatusMessage.New: label = "New"; color = "info"; break;
+            case StatusMessage.Error: label = "Error"; color = "danger"; break;
+            case StatusMessage.VideoAudioOriginError: label = "Video+Audio Origin Error"; color = "danger"; break;
+            case StatusMessage.VideoError: label = "Video Error"; color = "danger"; break;
+            case StatusMessage.AudioOriginError: label = "Audio Origin Error"; color = "danger"; break;
+            case StatusMessage.AudioOnlyError: label = "Audio Only Error"; color = "danger"; break;
+            default: label = code.ToString(); color = "secondary"; break;
+        }
+        return new Microsoft.AspNetCore.Components.MarkupString($"<span class='badge bg-{color}'>{label}</span>");
+    }
+
+    private void LoadingStateChanged() => InvokeAsync(StateHasChanged);
+
+    // Actions
+    public async Task ClearAllClick()
+    {
+
+        foreach(var item in Container.Links)
+        {
+            if(item.Status != StatusMessage.Downloading)
+            {
+                item.Status = StatusMessage.New;
+                Container.Links.Remove(item);
+            }
+        }
+        await Container.SaveContainerAsync();
+        SelectedLink = null;
+        Toast.Show("Đã xóa toàn bộ danh sách tải trên trang Chính.", ToastLevel.Info, "Main");
+    }
+
+    public void AddClick()
+    {
+        addModal?.Show();
+    }
+
+    public async Task OnAdd(string Message)
+    {
+        if (string.IsNullOrWhiteSpace(Message)) return;
+        var lines = Message.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        foreach (var line in lines)
+        {
+            var link = await TikTokDownloaderService.PrepareDownloadAsync(line);
+            if(link == null)
+            {
+                continue;
+            }
+            link.SaveLocation = DownloadSettings.DefaultPath;
+            if (link != null) Container.Links.Add(link);
+        }
+        await Container.SaveContainerAsync();
+        StateHasChanged();
+    }
+
+    // Select a link from the list (row click)
+    public void SelectLink(LinkInfo item)
+    {
+        SelectedLink = item;
+        StateHasChanged();
+    }
+
+    // Start download by enqueueing
+    public async Task StartSingleDownload(LinkInfo link)
+    {
+        SelectedLink = link;
+        await DownloadQueue.EnqueueDownloadAsync(link);
+        StateHasChanged();
+    }
+
+    public async Task CancelCurrentDownloading()
+    {
+        var current = Container.Links.FirstOrDefault(l => l.Status == StatusMessage.Downloading);
+        if (current != null)
+        {
+            await DownloadEngine.CancelDownloadAsync(current);
+            current.Status = StatusMessage.New;
+            await Container.SaveContainerAsync();
+            Toast.Show($"Đã hủy tải xuống: {current.TitleDescription ?? current.Url}", ToastLevel.Info, "Main");
+            StateHasChanged();
+        }
+    }
+
+    public async Task CancelSingle(LinkInfo item)
+    {
+        if (item == null) return;
+        // If Waiting: move to New
+        if (item.Status == StatusMessage.Waiting)
+        {
+            item.Status = StatusMessage.New;
+            await Container.SaveContainerAsync();
+            Toast.Show($"Đã hủy tải xuống: {item.TitleDescription ?? item.Url}", ToastLevel.Info, "Main");
+            StateHasChanged();
+            return;
+        }
+
+        if (item.Status == StatusMessage.Downloading)
+        {
+            await DownloadEngine.CancelDownloadAsync(item);
+            item.Status = StatusMessage.New;
+            await Container.SaveContainerAsync();
+            Toast.Show($"Đã hủy tải xuống: {item.VideoId ?? item.Url}", ToastLevel.Info, "Main");
+            StateHasChanged();
+            return;
+        }
+
+        // Default cancel behavior
+        bool isError = item.Status >= StatusMessage.Error;
+        if (!isError)
+        {
+            item.Status = StatusMessage.Canceled;
+        }
+
+        if (Container.Links.Contains(item) && HistoryContainer != null)
+        {
+            HistoryContainer.Links.Add(item);
+            await HistoryContainer.SaveContainerAsync();
+
+            Container.Links.Remove(item);
+            await Container.SaveContainerAsync();
+        }
+
+        Toast.Show($"Đã hủy tải xuống: {item.VideoId ?? item.Url}", ToastLevel.Info, "Main");
+        StateHasChanged();
+    }
+
+    public async Task ClearItem(LinkInfo item)
+    {
+        int idx = Container.Links.IndexOf(item);
+        if (idx >= 0)
+        {
+            item.Status = StatusMessage.New;
+            Container.Links.RemoveAt(idx);
+            await Container.SaveContainerAsync();
+            Toast.Show($"Đã xóa khỏi danh sách tải: {item.VideoId ?? item.Url}", ToastLevel.Info, "Main");
+            StateHasChanged();
+        }
+    }
+
+    public async Task ReInstall(LinkInfo item)
+    {
+        await StartSingleDownload(item);
+    }
+
+    public async Task CancelFromMain(LinkInfo item)
+    {
+        await CancelSingle(item);
+    }
+
+    public async Task ClearFromMainAsync()
+    {
+        await Container.ClearAllFromMainAsync();
+        Toast.Show("Đã xóa toàn bộ danh sách tải trên trang Chính", ToastLevel.Success, "Main");
+        StateHasChanged();
+    }
+
+    public async Task DownloadAll()
+    {
+        foreach (var link in Container.Links)
+        {
+            if (link.Status == StatusMessage.Downloading || link.Status == StatusMessage.Success) continue;
+            await StartSingleDownload(link);
+        }
+        StateHasChanged();
+    }
+
+    public async Task SavePath()
+    {
+        DownloadSettings.SetPath(pathInput);
+        await Container.SaveContainerAsync();
+        Toast.Show("Đã lưu đường dẫn tải mặc định.", ToastLevel.Info, "Main");
+        StateHasChanged();
+    }
+
+    // Active link end
+    private LinkInfo? ActiveLink => Container.Links.FirstOrDefault(l => l.Status == StatusMessage.Downloading) ?? SelectedLink;
+}

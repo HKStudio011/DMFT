@@ -1,0 +1,159 @@
+﻿@page "/history"
+@using System
+@using System.Linq
+@using DMFT.Model
+@using Microsoft.Maui.Essentials
+@using DMFT.Utilities
+@inject HistoryContainer HistoryContainer
+@inject MainContainer MainContainer
+@inject ToastService Toast
+
+<ToastContainer Scope="History" />
+
+<!-- Loading Modal -->
+<LoadingModal @ref="loadingModal" IsVisible="@HistoryContainer.IsLoading" Message="Loading history, please wait..."></LoadingModal>
+
+<button class="btn btn-danger" @onclick="ClearAll">Clear All History</button>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th class="w-auto">#</th>
+      <th class="w-25">Link</th>
+      <th>Time</th>
+      <th>Status</th>
+      <th>VideoId</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    @{ var hist = HistoryContainer.Links
+            .Where(l => l.Status == StatusMessage.Success || l.Status == StatusMessage.Canceled || l.Status == StatusMessage.Error)
+            .ToList(); }
+    @for (int i = 0; i < hist.Count; i++)
+    {
+      var item = hist[i];
+      <tr>
+        <td>@(i + 1)</td>
+        <td>@item.Url</td>
+        <td>@item.Time.ToString("g")</td>
+        <td>@StatusBadge(item.Status)</td>
+        <td>@item.VideoId</td>
+        <td>
+          <div class="d-flex gap-1">
+                        @if (item.Status == StatusMessage.Success)
+                        {
+                             <button class="btn btn-sm btn-outline-success" @onclick="@(async () => await OpenFolder(item))">Location</button>
+                        }
+                        <button class="btn btn-sm btn-outline-danger" @onclick="@(async () => await RemoveHistoryItem(item))">Remove</button>
+            <button class="btn btn-sm btn-outline-warning" @onclick="@(async () => await ReInstall(item))">ReInstall</button>
+          </div>
+        </td>
+      </tr>
+    }
+  </tbody>
+</table>
+
+@code {
+
+    private LoadingModal? loadingModal;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        if (HistoryContainer != null)
+            HistoryContainer.OnLoadingStateChanged += LoadingStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && HistoryContainer.IsLoading)
+        {
+            await HistoryContainer.LoadContainerAsync();
+            // load path settings after initial data load
+            StateHasChanged();
+        }
+
+    }
+
+    public void Dispose()
+    {
+        if (HistoryContainer != null)
+            HistoryContainer.OnLoadingStateChanged -= LoadingStateChanged;
+    }
+
+    private void LoadingStateChanged() => InvokeAsync(StateHasChanged);
+
+    public Microsoft.AspNetCore.Components.MarkupString StatusBadge(int code)
+    {
+        string label, color;
+        switch (code)
+        {
+            case StatusMessage.Success: label = "Success"; color = "success"; break;
+            case StatusMessage.Canceled: label = "Canceled"; color = "secondary"; break;
+            case StatusMessage.Downloading: label = "Downloading"; color = "primary"; break;
+            case StatusMessage.Waiting: label = "Waiting"; color = "warning"; break;
+            case StatusMessage.New: label = "New"; color = "info"; break;
+            case StatusMessage.Error: label = "Error"; color = "danger"; break;
+            case StatusMessage.VideoAudioOriginError: label = "Video+Audio Origin Error"; color = "danger"; break;
+            case StatusMessage.VideoError: label = "Video Error"; color = "danger"; break;
+            case StatusMessage.AudioOriginError: label = "Audio Origin Error"; color = "danger"; break;
+            case StatusMessage.AudioOnlyError: label = "Audio Only Error"; color = "danger"; break;
+            default: label = code.ToString(); color = "secondary"; break;
+        }
+        return new Microsoft.AspNetCore.Components.MarkupString($"<span class='badge bg-{color}'>{label}</span>");
+    }
+
+    public async Task ClearAll()
+    {
+        await HistoryContainer.ClearAllAsync();
+        Toast.Show("Đã xóa toàn bộ lịch sử tải xuống.", ToastLevel.Success, "History");
+        StateHasChanged();
+    }
+
+    public async Task RemoveHistoryItem(LinkInfo item)
+    {
+        int idx = HistoryContainer.Links.IndexOf(item);
+        if (idx >= 0)
+        {
+            HistoryContainer.Links.RemoveAt(idx);
+            await HistoryContainer.SaveContainerAsync();
+            Toast.Show("Đã xóa khỏi lịch sử", ToastLevel.Info, "History");
+            StateHasChanged();
+        }
+    }
+
+    public async Task ReInstall(LinkInfo item)
+    {
+        if (HistoryContainer.Links.Contains(item) && MainContainer != null)
+        {
+
+            item.Status = StatusMessage.New;
+            MainContainer.Links.Add(item);
+            await MainContainer.SaveContainerAsync();
+
+            HistoryContainer.Links.Remove(item);
+            await HistoryContainer.SaveContainerAsync();
+        }
+
+        Toast.Show($"Đã thêm vào danh sách tải xuống: {item.TitleDescription ?? item.Url}", ToastLevel.Info, "History");
+        StateHasChanged();
+    }
+
+    // Opens the parent folder of the saved location for this history item
+    public async Task OpenFolder(LinkInfo item)
+    {
+        if (item == null || string.IsNullOrWhiteSpace(item.SaveLocation))
+        {
+            Toast.Show("Không có đường dẫn thư mục lưu trữ cho mục này.", ToastLevel.Info, "History");
+            return;
+        }
+        try
+        {
+            DMFT.Utilities.FolderOpener.OpenParentFolder(item.SaveLocation);
+        }
+        catch (Exception ex)
+        {
+            Toast.Show($"Không thể mở thư mục: {ex.Message}", ToastLevel.Error, "History");
+        }
+    }
+}
