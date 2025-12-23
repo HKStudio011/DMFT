@@ -1,14 +1,16 @@
 @page "/" 
 @using System.Threading.Tasks
+@using CommunityToolkit.Maui.Storage
 @inject MainContainer Container
 @inject IDownloadEngineAdapter DownloadEngine
 @inject ITikTokDownloaderService TikTokDownloaderService
 @inject IDownloadQueue DownloadQueue
+@using CommunityToolkit.Maui.Storage
 @inject ToastService Toast
 @inject HistoryContainer HistoryContainer
 @inject SeleniumServices SeleniumServices
 @implements IDisposable
-
+ 
 <div class="vh-100 overflow-auto">
     <!-- Loading Modal -->
     <LoadingModal @ref="loadingModal" IsVisible="@Container.IsLoading" Message="Đang tải dữ liệu, vui lòng chờ..."></LoadingModal>
@@ -23,7 +25,10 @@
                 <input class="form-control" @bind-value="pathInput" placeholder="Default download path" />
             </div>
             <div class="col-auto">
-                <button class="btn btn-outline-info" @onclick="SavePath">Save Path</button>
+                <button class="btn btn-outline-primary" @onclick="SavePath">Save Path</button>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-outline-success" @onclick="PickFolderAsync">Browse</button>
             </div>
         </div>
         <div class="mt-1 text-muted" style="font-size:smaller;">Current: @pathInput</div>
@@ -245,10 +250,10 @@
     }
 
     // Start download by enqueueing
-    public async Task StartSingleDownload(LinkInfo link)
+    public async Task StartSingleDownload(LinkInfo item)
     {
-        SelectedLink = link;
-        await DownloadQueue.EnqueueDownloadAsync(link);
+        SelectedLink = item;
+        await DownloadQueue.EnqueueDownloadAsync(item);
         StateHasChanged();
     }
 
@@ -354,6 +359,32 @@
         await Container.SaveContainerAsync();
         Toast.Show("Đã lưu đường dẫn tải mặc định.", ToastLevel.Info, "Main");
         StateHasChanged();
+    }
+
+    // Folder picker integration
+    public async Task PickFolderAsync()
+    {
+        try
+        {
+            var result = await FolderPicker.Default.PickAsync(System.Threading.CancellationToken.None);
+            if (result.IsSuccessful && result.Folder != null)
+            {
+                var pickedPath = result.Folder.Path;
+                pathInput = pickedPath;
+                DownloadSettings.SetPath(pickedPath);
+                await Container.SaveContainerAsync();
+                Toast.Show($"Đã chọn thư mục lưu tải: {pickedPath}", ToastLevel.Info, "Main");
+                StateHasChanged();
+            }
+            else
+            {
+                Toast.Show("The folder was not picked.", ToastLevel.Info, "Main");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Show($"Lỗi chọn thư mục: {ex.Message}", ToastLevel.Error, "Main");
+        }
     }
 
     // Active link end
