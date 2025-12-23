@@ -45,6 +45,10 @@ namespace DMFT.Services
                     if (itemsB.Count > 0 && itemsB[0].Displayed)
                         return itemsB[0];
 
+                    var itemsC = drv.FindElements(By.XPath("//*[@id=\"media-card-0\"]/div/div[2]/div[2]/div/div[6]/a"));
+                    if (itemsC.Count > 0 && itemsC[0].Displayed)
+                        return itemsC[0];
+
                     return null; // tiếp tục chờ nếu chưa thấy gì
                 });
 
