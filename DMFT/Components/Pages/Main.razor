@@ -144,6 +144,12 @@
 
 @code {
 
+
+
+
+
+
+
     private AddModal? addModal;
     private LoadingModal? loadingModal;
     private LinkInfo? SelectedLink;
@@ -206,12 +212,12 @@
     public async Task ClearAllClick()
     {
 
-        foreach(var item in Container.Links)
+        for (int i = Container.Links.Count - 1; i >= 0; i--)
         {
-            if(item.Status != StatusMessage.Downloading)
+            if (Container.Links[i].Status != StatusMessage.Downloading)
             {
-                item.Status = StatusMessage.New;
-                Container.Links.Remove(item);
+                Container.Links[i].Status = StatusMessage.New;
+                Container.Links.RemoveAt(i);
             }
         }
         await Container.SaveContainerAsync();
