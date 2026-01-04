@@ -39,6 +39,16 @@
         <button class="btn btn-primary mb-2" @onclick="AddClick">Add</button>
         <button class="btn btn-success mb-2" @onclick="DownloadAll">Download All</button>
         <button class="btn btn-warning mb-2" @onclick="ClearAllClick">Clear All</button>
+        <div class="mb-2 d-flex align-items-center gap-2">
+            <span class="fw-bold" style="white-space: nowrap;">Set All Mode:</span>
+            <select class="form-select form-select-sm" style="width: auto;" @bind="selectedModeForAll" aria-label="Select download mode for all">
+                <option value="@DownloadMode.Video">Video</option>
+                <option value="@DownloadMode.AudioOnly">Audio Only</option>
+                <option value="@DownloadMode.AudioOriginOnly">Audio Origin</option>
+                <option value="@DownloadMode.VideoAndAudioOrigin">Video + Audio Origin</option>
+            </select>
+            <button class="btn btn-sm btn-outline-primary" @onclick="ApplyModeToAll">Apply to All</button>
+        </div>
         <div class="mb-4 h-50 overflow-auto">
             <div class="table-responsive">
                 <table class="table table-striped">
@@ -154,6 +164,7 @@
     private LoadingModal? loadingModal;
     private LinkInfo? SelectedLink;
     private string? pathInput;
+    private DownloadMode selectedModeForAll = DownloadMode.Video;
 
     protected override async Task OnInitializedAsync()
     {
@@ -306,10 +317,17 @@
             item.Status = StatusMessage.Canceled;
         }
 
-        if (Container.Links.Contains(item) && HistoryContainer != null)
+        if (Container.Links.Contains(item))
         {
-            HistoryContainer.Links.Add(item);
-            await HistoryContainer.SaveContainerAsync();
+            if (HistoryContainer != null)
+            {
+                if (HistoryContainer.IsLoading)
+                {
+                    await HistoryContainer.LoadContainerAsync();
+                }
+                HistoryContainer.Links.Add(item);
+                await HistoryContainer.SaveContainerAsync();
+            }
 
             Container.Links.Remove(item);
             await Container.SaveContainerAsync();
@@ -364,6 +382,16 @@
         DownloadSettings.SetPath(pathInput);
         await Container.SaveContainerAsync();
         Toast.Show("Đã lưu đường dẫn tải mặc định.", ToastLevel.Info, "Main");
+        StateHasChanged();
+    }
+
+    public void ApplyModeToAll()
+    {
+        foreach (var link in Container.Links)
+        {
+            link.DownloadMode = selectedModeForAll;
+        }
+        Toast.Show($"Đã áp dụng chế độ tải cho tất cả: {selectedModeForAll}", ToastLevel.Info, "Main");
         StateHasChanged();
     }
 

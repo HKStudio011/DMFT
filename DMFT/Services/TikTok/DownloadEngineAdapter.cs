@@ -132,6 +132,10 @@ namespace DMFT.Services
         {
             if (link == null) return;
 
+            if (_history.IsLoading)
+            {
+                await _history.LoadContainerAsync();
+            }
             _history.Links.Add(link);
             await _history.SaveContainer();
 

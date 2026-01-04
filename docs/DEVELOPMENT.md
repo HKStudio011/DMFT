@@ -55,8 +55,32 @@ DMFT/
 │   └── Selenium/      # Scraping services
 ├── Platforms/          # Platform-specific code
 ├── Utilities/          # Helper utilities
+├── DMFT.Tests/        # Unit tests (xUnit)
 └── docs/              # Documentation
 ```
+
+## Testing
+
+### Run Tests
+```bash
+# Run all tests
+dotnet test DMFT.Tests/DMFT.Tests.csproj
+
+# Test results: Passed!  - Failed: 0, Passed: 39, Skipped: 0, Total: 39
+```
+
+### Test Structure
+| Test File | Coverage |
+|-----------|----------|
+| `Models/DownloadModeTests.cs` | DownloadMode enum validation |
+| `Models/StatusMessageTests.cs` | StatusMessage enum validation |
+| `Models/LinkInfoTests.cs` | LinkInfo class properties |
+| `Models/TikTokTypesTests.cs` | TikTok types and enums |
+
+### Add New Tests
+1. Create test file in `DMFT.Tests/Models/` or `DMFT.Tests/Services/`
+2. Add test methods with `[Fact]` or `[Theory]` attributes
+3. Run `dotnet test` to verify
 
 ## Key Files Reference
 

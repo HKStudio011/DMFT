@@ -21,6 +21,8 @@
 | Blazor | Latest | Web-based UI components |
 | C# | Latest | Primary language |
 | yt-dlp | Latest | Video downloading engine |
+| xUnit | 2.9.3 | Unit testing framework |
+| Moq | 4.20.72 | Mocking library for tests |
 
 ## Cấu trúc thư mục
 
@@ -71,7 +73,41 @@ DMFT/
 ├── Resources/              # Resources
 ├── wwwroot/               # Web root
 ├── docs/                  # Documentation
-└── yt-dlp/               # yt-dlp binaries
+├── yt-dlp/               # yt-dlp binaries
+└── DMFT.Tests/           # Unit tests (xUnit)
+```
+
+## Testing
+
+### Chạy Tests
+```bash
+dotnet test DMFT.Tests/DMFT.Tests.csproj
+```
+
+### Test Coverage
+- **39 unit tests** covering:
+  - `DownloadModeTests` - Tests cho enum DownloadMode (4 tests)
+  - `StatusMessageTests` - Tests cho enum StatusMessage (8 tests)
+  - `LinkInfoTests` - Tests cho class LinkInfo (14 tests)
+  - `TikTokTypesTests` - Tests cho TikTok types (9 tests)
+
+### Ví dụ Test
+```csharp
+[Fact]
+public void DownloadMode_ShouldHaveFourValues()
+{
+    var values = Enum.GetValues<DownloadMode>();
+    Assert.Equal(4, values.Length);
+}
+
+[Theory]
+[InlineData(StatusMessage.Success)]
+[InlineData(StatusMessage.Error)]
+public void StatusMessage_AllDefinedValues_ShouldBeParsable(StatusMessage status)
+{
+    var parsed = Enum.Parse<StatusMessage>(status.ToString());
+    Assert.Equal(status, parsed);
+}
 ```
 
 ## Tính năng

@@ -1,4 +1,4 @@
-﻿@page "/history"
+@page "/history"
 @using System
 @using System.Linq
 @using DMFT.Model
@@ -25,9 +25,10 @@
       <th>Actions</th>
     </tr>
   </thead>
-  <tbody>
+    <tbody>
     @{ var hist = HistoryContainer.Links
             .Where(l => l.Status == StatusMessage.Success || l.Status == StatusMessage.Canceled || l.Status >= StatusMessage.Error)
+            .OrderByDescending(l => l.Time)
             .ToList(); }
     @for (int i = 0; i < hist.Count; i++)
     {

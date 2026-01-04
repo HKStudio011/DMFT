@@ -17,6 +17,10 @@
   - Audio origin only
   - Video + Audio origin
 - Hàng đợi tải và lịch sử tải xuống.
+- **Thay đổi gần đây (04/01/2026)**:
+  - Thêm tính năng chọn Download Mode cho tất cả items trong danh sách
+  - Sửa bug ghi nhật ký history khi history chưa được load
+  - Triển khai 39 unit tests cho models
 - Thông báo lỗi/thành công bằng toast.
 - Lưu trữ dữ liệu trong **AppData** (`main_data.json`, `history_data.json`).
 
@@ -65,6 +69,31 @@ dotnet build DMFT/DMFT.csproj -c Release
   - `Audio Only`
   - `Audio Origin Only`
   - `Video And Audio Origin`
+
+---
+
+## 🧪 Testing
+
+### Chạy Unit Tests
+```bash
+# Build và chạy tests
+dotnet test DMFT.Tests/DMFT.Tests.csproj
+
+# Kết quả: Passed!  - Failed: 0, Passed: 39, Skipped: 0, Total: 39
+```
+
+### Test Coverage
+| Test Class | Số lượng test | Mục đích |
+|------------|---------------|----------|
+| `DownloadModeTests` | 4 | Kiểm tra enum DownloadMode |
+| `StatusMessageTests` | 8 | Kiểm tra enum StatusMessage |
+| `LinkInfoTests` | 14 | Kiểm tra class LinkInfo |
+| `TikTokTypesTests` | 9 | Kiểm tra TikTok types |
+
+### Thêm Tests Mới
+1. Tạo file test trong `DMFT.Tests/Models/` hoặc `DMFT.Tests/Services/`
+2. Thêm các test methods với attribute `[Fact]` hoặc `[Theory]`
+3. Chạy lại `dotnet test` để xác nhận tests pass
 
 ---
 
