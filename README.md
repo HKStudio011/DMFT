@@ -3,6 +3,8 @@
 
 # DMFT - TikTok Downloader (MAUI Blazor)
 
+> **⚠️ Lưu ý**: Đây là file giới thiệu dự án (project README). Tài liệu dự án chi tiết nằm trong thư mục [docs/](docs/README.md).
+
 ## 📖 Giới thiệu
 **DMFT** là ứng dụng đa nền tảng (MAUI Blazor) cho phép quản lý và tải video TikTok thông qua công cụ **yt-dlp**.  
 Ứng dụng cung cấp giao diện trực quan với danh sách liên kết, hàng đợi tải, lịch sử tải xuống, cùng hệ thống thông báo lỗi/thành công bằng **toast**.
