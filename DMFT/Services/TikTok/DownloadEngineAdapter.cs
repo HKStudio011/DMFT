@@ -54,7 +54,17 @@ namespace DMFT.Services
                 string videoUrl = link.Url;
                 string audioUrl = link.OriginalSoundUrl;
                 string videoDest = Path.Combine(link.SaveLocation, $"{link.VideoId}_video.mp4");
-                string audioDest = Path.Combine(link.SaveLocation, $"{LinkInfoTag(link.VideoId)}_audio.mp3");
+
+                string audioFileName = $"{LinkInfoTag(link.VideoId)}_audio";
+                if (!string.IsNullOrWhiteSpace(link.OriginalSoundName))
+                {
+                    audioFileName = link.OriginalSoundName +"_"+ link.VideoId;
+                    foreach (char c in Path.GetInvalidFileNameChars())
+                    {
+                        audioFileName = audioFileName.Replace(c, '_');
+                    }
+                }
+                string audioDest = Path.Combine(link.SaveLocation, $"{audioFileName}.mp3");
 
                 Task videoTask = null;
                 Task audioTask = null;

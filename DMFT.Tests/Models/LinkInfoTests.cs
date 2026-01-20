@@ -161,5 +161,20 @@ namespace DMFT.Tests.Models
             Assert.Equal(DownloadMode.VideoAndAudioOrigin, link.DownloadMode);
             Assert.Equal(StatusMessage.New, link.Status);
         }
+
+        [Fact]
+        public void LinkInfo_OriginalSoundNamePriority_ShouldBeSetCorrectly()
+        {
+            var link = new LinkInfo
+            {
+                VideoId = "12345",
+                OriginalSoundName = "Test Sound Name"
+            };
+
+            // This tests that properties are stored correctly which is the pre-requisite 
+            // for the naming logic in DownloadEngineAdapter to work
+            Assert.Equal("12345", link.VideoId);
+            Assert.Equal("Test Sound Name", link.OriginalSoundName);
+        }
     }
 }

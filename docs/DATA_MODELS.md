@@ -62,9 +62,12 @@ public class TikTokVideoInfo
 | `history_data.json` | Lưu trữ lịch sử tải |
 
 ### File Naming Convention
-```
-{creator}_{title}_{videoId}.{extension}
-```
+Files are named based on the content type:
+
+- **Video**: `{videoId}_video.mp4`
+- **Audio**: 
+  - Nếu có tên bài hát (Audio Origin mode): `{OriginalSoundName}.mp3` (với các ký tự đặc biệt được thay bằng `_`)
+  - Nếu không có: `{videoId}_audio.mp3`
 
 ## Related Files
 | File | Mô tả |
