@@ -10,15 +10,15 @@ namespace DMFT.Services
 
     public class TikTokDownloaderService : ITikTokDownloaderService
     {
-        private readonly ITikTokLinkParser _parser;
-        public TikTokDownloaderService(ITikTokLinkParser parser)
+        private readonly IVideoLinkParser _parser;
+        public TikTokDownloaderService(IVideoLinkParser parser)
         {
             _parser = parser;
         }
 
         public async Task<DMFT.Model.LinkInfo?> PrepareDownloadAsync(string url)
         {
-            if (!_parser.IsTikTokUrl(url)) return null;
+            if (!_parser.IsSupportedUrl(url)) return null;
             if (!_parser.TryParseVideoId(url, out var videoId)) return null;
 
             var info = new DMFT.Model.LinkInfo

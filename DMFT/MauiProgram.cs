@@ -36,7 +36,7 @@ namespace DMFT
                 return container;
             });
             // TikTok downloader services registrations
-            builder.Services.AddSingleton<ITikTokLinkParser, TikTokLinkParser>();
+            builder.Services.AddSingleton<IVideoLinkParser, VideoLinkParser>();
             builder.Services.AddSingleton<ITikTokDownloaderService, TikTokDownloaderService>();
             builder.Services.AddSingleton<IMediaDownloader, MediaDownloader>();
             builder.Services.AddSingleton<IDownloadEngineAdapter, DownloadEngineAdapter>();

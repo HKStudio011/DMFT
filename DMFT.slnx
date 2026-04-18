@@ -1,4 +1,3 @@
 <Solution>
-  <Project Path="DMFT.Tests/DMFT.Tests.csproj" />
   <Project Path="DMFT/DMFT.csproj" />
 </Solution>

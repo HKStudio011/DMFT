@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using System.IO;
 using Microsoft.Maui.Storage;
 using System.Net.Http;
+using System.Timers;
 using DMFT.Model;
 
 namespace DMFT.Services
@@ -20,6 +21,9 @@ namespace DMFT.Services
         private readonly HistoryContainer _history;
         private readonly MainContainer _main;
         private readonly SeleniumServices _seleniumServices;
+        private LinkInfo? _currentLink;
+        private System.Timers.Timer? _progressTimer;
+        private const int ProgressRefreshMs = 500;
 
         public DownloadEngineAdapter(IMediaDownloader downloader, HistoryContainer history, MainContainer main, SeleniumServices seleniumServices)
         {
@@ -27,12 +31,55 @@ namespace DMFT.Services
             _history = history;
             _main = main;
             _seleniumServices = seleniumServices;
+
+            _downloader.OnProgress += HandleProgress;
+        }
+
+        private void HandleProgress(DownloadProgress progress)
+        {
+            if (_currentLink == null) return;
+
+            _currentLink.DownloadedBytes = progress.DownloadedBytes;
+            _currentLink.TotalBytes = progress.TotalBytes;
+            _currentLink.Speed = progress.Speed;
+            _currentLink.EtaSeconds = progress.EtaSeconds;
+
+            if (progress.TotalBytes > 0)
+            {
+                _currentLink.ProgressPercent = (int)((progress.DownloadedBytes * 100) / progress.TotalBytes);
+            }
+        }
+
+        private void StartProgressTimer()
+        {
+            _progressTimer = new System.Timers.Timer(ProgressRefreshMs);
+            _progressTimer.Elapsed += (_, _) =>
+            {
+                _main.RequestRefresh();
+            };
+            _progressTimer.Start();
+        }
+
+        private void StopProgressTimer()
+        {
+            _progressTimer?.Stop();
+            _progressTimer?.Dispose();
+            _progressTimer = null;
         }
 
         public async Task StartDownloadAsync(LinkInfo link)
         {
             if (link == null) return;
+
+            _currentLink = link;
             link.Status = StatusMessage.Downloading;
+            link.DownloadedBytes = 0;
+            link.TotalBytes = 0;
+            link.Speed = 0;
+            link.EtaSeconds = 0;
+            link.ProgressPercent = 0;
+
+            StartProgressTimer();
             try
             {
                 if (link.DownloadMode == DownloadMode.VideoAndAudioOrigin || link.DownloadMode == DownloadMode.AudioOriginOnly)
@@ -71,9 +118,13 @@ namespace DMFT.Services
 
                 if (link.DownloadMode == DownloadMode.VideoAndAudioOrigin)
                 {
+                    link.CurrentFileName = Path.GetFileName(videoDest);
                     videoTask = _downloader.DownloadAsync(videoUrl, videoDest, noWatermark: true);
                     if (!string.IsNullOrWhiteSpace(audioUrl))
+                    {
+                        link.CurrentFileName = Path.GetFileName(audioDest);
                         audioTask = _downloader.DownloadAudioAsync(audioUrl, audioDest);
+                    }
                     if (videoTask != null && audioTask != null)
                         await Task.WhenAll(videoTask, audioTask);
                     else
@@ -81,6 +132,7 @@ namespace DMFT.Services
                 }
                 else if (link.DownloadMode == DownloadMode.Video)
                 {
+                    link.CurrentFileName = Path.GetFileName(videoDest);
                     videoTask = _downloader.DownloadAsync(videoUrl, videoDest, noWatermark: true);
                     if (videoTask != null)
                         await videoTask;
@@ -91,6 +143,7 @@ namespace DMFT.Services
                 {
                     if (!string.IsNullOrWhiteSpace(audioUrl))
                     {
+                        link.CurrentFileName = Path.GetFileName(audioDest);
                         audioTask = _downloader.DownloadAudioAsync(audioUrl, audioDest);
                         if (audioTask != null)
                             await audioTask;
@@ -104,6 +157,7 @@ namespace DMFT.Services
                 {
                     if (!string.IsNullOrWhiteSpace(videoUrl))
                     {
+                        link.CurrentFileName = Path.GetFileName(audioDest);
                         audioTask = _downloader.DownloadAudioAsync(videoUrl, audioDest);
                         if (audioTask != null)
                             await audioTask;
@@ -115,6 +169,7 @@ namespace DMFT.Services
                 }
 
                 link.Status = StatusMessage.Success;
+                StopProgressTimer();
                 await MoveToHistoryAsync(link);
             }
             catch (Exception ex)
@@ -134,6 +189,7 @@ namespace DMFT.Services
                 }
                 // Surface error to user via toast and then save container to reflect state
                 _main.Toast?.Show($"Lỗi tải xuống: {link.VideoId ?? link.Url} ({ex.GetType().Name}) - {ex.Message}", ToastLevel.Error, _main.ToastScope);
+                StopProgressTimer();
                 await _main.SaveContainerAsync();
             }
         }
@@ -158,6 +214,7 @@ namespace DMFT.Services
         public async Task CancelDownloadAsync(LinkInfo link)
         {
             if (link == null) return;
+            StopProgressTimer();
             await _downloader.CancelAsync();
         }
 

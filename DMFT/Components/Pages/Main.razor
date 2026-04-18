@@ -137,6 +137,19 @@
                             <p class="mb-1"><strong>URL:</strong> <a href="@link.OriginalUrl" target="_blank">@link.OriginalUrl</a></p>
                             <p class="mb-1"><strong>Mode:</strong> @link.DownloadMode</p>
                             <p class="mb-1"><strong>Status:</strong> @StatusBadge(link.Status)</p>
+                            @if (!string.IsNullOrWhiteSpace(link.CurrentFileName))
+                            {
+                                <p class="mb-1"><strong>File:</strong> @link.CurrentFileName</p>
+                            }
+                            @if (link.TotalBytes > 0 || link.DownloadedBytes > 0)
+                            {
+                                <div class="mt-2">
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar" role="progressbar" style="width: @link.ProgressPercent%;" aria-valuenow="@link.ProgressPercent" aria-valuemin="0" aria-valuemax="100">@link.ProgressPercent%</div>
+                                    </div>
+                                    <p class="mb-0 mt-1"><small>@FormatBytes(link.DownloadedBytes) / @FormatBytes(link.TotalBytes) | @FormatSpeed(link.Speed) | ETA: @FormatEta(link.EtaSeconds)</small></p>
+                                </div>
+                            }
                         </div>
                     </div>
                 }
@@ -169,7 +182,10 @@
     protected override async Task OnInitializedAsync()
     {
         if (Container != null)
+        {
             Container.OnLoadingStateChanged += LoadingStateChanged;
+            Container.OnRefreshRequested += LoadingStateChanged;
+        }
         if (DownloadQueue != null)
             DownloadQueue.OnQueueUpdated += LoadingStateChanged;
         await DownloadSettings.LoadAsync();
@@ -180,7 +196,10 @@
     public void Dispose()
     {
         if (Container != null)
+        {
             Container.OnLoadingStateChanged -= LoadingStateChanged;
+            Container.OnRefreshRequested -= LoadingStateChanged;
+        }
         if (DownloadQueue != null)
             DownloadQueue.OnQueueUpdated -= LoadingStateChanged;
     }
@@ -423,4 +442,28 @@
 
     // Active link end
     private LinkInfo? ActiveLink => Container.Links.FirstOrDefault(l => l.Status == StatusMessage.Downloading) ?? SelectedLink;
+
+    private string FormatBytes(long bytes)
+    {
+        if (bytes <= 0) return "0 B";
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        int order = 0;
+        double size = bytes;
+        while (size >= 1024 && order < sizes.Length - 1) { order++; size /= 1024; }
+        return $"{size:0.##} {sizes[order]}";
+    }
+
+    private string FormatSpeed(double bytesPerSec)
+    {
+        if (bytesPerSec <= 0) return "calculating...";
+        return FormatBytes((long)bytesPerSec) + "/s";
+    }
+
+    private string FormatEta(int seconds)
+    {
+        if (seconds <= 0) return "--";
+        if (seconds < 60) return $"{seconds}s";
+        if (seconds < 3600) return $"{seconds / 60}m {seconds % 60}s";
+        return $"{seconds / 3600}h {(seconds % 3600) / 60}m";
+    }
 }

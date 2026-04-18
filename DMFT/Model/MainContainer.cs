@@ -7,10 +7,17 @@ namespace DMFT.Model
 {
     public class MainContainer : BaseContainer
     {
+        public event System.Action? OnRefreshRequested;
+
         public MainContainer() : base("main_data.json")
         {
-            IsLoading = true; // Start with loading state
+            IsLoading = true;
             ToastScope = "Main";
+        }
+
+        public void RequestRefresh()
+        {
+            OnRefreshRequested?.Invoke();
         }
 
         // Legacy sync methods removed: use async APIs directly
