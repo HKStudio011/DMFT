@@ -1,0 +1,190 @@
+/* ============================================
+   THEME CSS - Multiple Themes Support
+   ============================================ */
+
+/* Tailwind v4 Theme Integration */
+@theme inline {
+    /* Primary */
+    --color-primary: var(--primary);
+    --color-primary-container: var(--primary-container);
+    --color-primary-fixed: var(--primary-fixed);
+    --color-primary-fixed-dim: var(--primary-fixed-dim);
+    --color-on-primary: var(--on-primary);
+    --color-on-primary-container: var(--on-primary-container);
+    /* Surface */
+    --color-surface: var(--surface);
+    --color-surface-container-lowest: var(--surface-container-lowest);
+    --color-surface-container-low: var(--surface-container-low);
+    --color-surface-container: var(--surface-container);
+    --color-surface-container-high: var(--surface-container-high);
+    --color-surface-bright: var(--surface-bright);
+    --color-surface-variant: var(--surface-variant);
+    --color-surface-dim: var(--surface-dim);
+    /* On colors */
+    --color-on-surface: var(--on-surface);
+    --color-on-surface-variant: var(--on-surface-variant);
+    --color-on-surface-dim: var(--on-surface-dim);
+    /* Outline */
+    --color-outline: var(--outline);
+    --color-outline-variant: var(--outline-variant);
+    /* Secondary */
+    --color-secondary: var(--secondary);
+    --color-on-secondary: var(--on-secondary);
+    --color-secondary-container: var(--secondary-container);
+    --color-on-secondary-container: var(--on-secondary-container);
+    --color-secondary-fixed: var(--secondary-fixed);
+    --color-secondary-fixed-dim: var(--secondary-fixed-dim);
+    /* Tertiary */
+    --color-tertiary: var(--tertiary);
+    --color-on-tertiary: var(--on-tertiary);
+    --color-tertiary-container: var(--tertiary-container);
+    --color-on-tertiary-container: var(--on-tertiary-container);
+    --color-tertiary-fixed: var(--tertiary-fixed);
+    --color-tertiary-fixed-dim: var(--tertiary-fixed-dim);
+    /* Error */
+    --color-error: var(--error);
+    --color-on-error: var(--on-error);
+    --color-error-container: var(--error-container);
+    --color-on-error-container: var(--on-error-container);
+    /* Background */
+    --color-background: var(--background);
+    --color-on-background: var(--on-background);
+    /* Inverse */
+    --color-inverse-surface: var(--inverse-surface);
+    --color-inverse-on-surface: var(--inverse-on-surface);
+    --color-inverse-primary: var(--inverse-primary);
+    /* Surface tint */
+    --color-surface-tint: var(--surface-tint);
+}
+
+/* ============================================
+   MAIN SITE THEME (default - dark + gold)
+   ============================================ */
+:root {
+  /* Primary colors */
+  --primary: #fff6df;
+  --primary-container: #ffd700;
+  --primary-fixed: #ffe16d;
+  --primary-fixed-dim: #e9c400;
+  --on-primary: #3a3000;
+  --on-primary-container: #705e00;
+
+  /* Surface colors */
+  --surface: #131013;
+  --surface-container-lowest: #0e0e0e;
+  --surface-container-low: #1c1b1b;
+  --surface-container: #201f1f;
+  --surface-container-high: #2a2a2a;
+  --surface-bright: #393939;
+  --surface-variant: #353534;
+  --surface-dim: #131013;
+
+  /* On colors */
+  --on-surface: #e5e2e1;
+  --on-surface-variant: #d0c6ab;
+  --on-surface-dim: #e5e2e1;
+
+  /* Outline */
+  --outline: #999077;
+  --outline-variant: #4d4732;
+
+  /* Secondary */
+  --secondary: #ffb4a8;
+  --on-secondary: #690000;
+  --secondary-container: #920703;
+  --on-secondary-container: #ff9a8a;
+  --secondary-fixed: #ffdbcb;
+  --secondary-fixed-dim: #e5a892;
+
+  /* Tertiary */
+  --tertiary: #ffb4a8;
+  --on-tertiary: #690000;
+  --tertiary-container: #920703;
+  --on-tertiary-container: #ff9a8a;
+  --tertiary-fixed: #ffdbcb;
+  --tertiary-fixed-dim: #e5a892;
+
+  /* Error */
+  --error: #ffb4ab;
+  --on-error: #690005;
+  --error-container: #93000a;
+  --on-error-container: #ffdad6;
+
+  /* Background */
+  --background: #131013;
+  --on-background: #e5e2e1;
+
+  /* Inverse */
+  --inverse-surface: #e5e2e1;
+  --inverse-on-surface: #131013;
+  --inverse-primary: #ffd700;
+
+  /* Surface tint */
+  --surface-tint: #ffd700;
+}
+
+/* ============================================
+   ADMIN THEME (light - blue primary)
+   ============================================ */
+[data-theme="admin"] {
+  /* Primary colors */
+  --primary: #1E3A8A;
+  --primary-container: #1E3A8A;
+  --primary-fixed: #BFDBFE;
+  --primary-fixed-dim: #93C5FD;
+  --on-primary: #ffffff;
+  --on-primary-container: #1E3A8A;
+
+  /* Surface colors */
+  --surface: #F8FAFC;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f1f5f9;
+  --surface-container: #e2e8f0;
+  --surface-container-high: #cbd5e1;
+  --surface-bright: #94a3b8;
+  --surface-variant: #cbd5e1;
+  --surface-dim: #F8FAFC;
+
+  /* On colors */
+  --on-surface: #1e293b;
+  --on-surface-variant: #475569;
+  --on-surface-dim: #1e293b;
+
+  /* Outline */
+  --outline: #64748B;
+  --outline-variant: #cbd5e1;
+
+  /* Secondary */
+  --secondary: #64748B;
+  --on-secondary: #ffffff;
+  --secondary-container: #e2e8f0;
+  --on-secondary-container: #475569;
+  --secondary-fixed: #e2e8f0;
+  --secondary-fixed-dim: #cbd5e1;
+
+  /* Tertiary */
+  --tertiary: #6E2C00;
+  --on-tertiary: #ffffff;
+  --tertiary-container: #6E2C00;
+  --on-tertiary-container: #6E2C00;
+  --tertiary-fixed: #ffedd5;
+  --tertiary-fixed-dim: #fed7aa;
+
+  /* Error */
+  --error: #dc2626;
+  --on-error: #ffffff;
+  --error-container: #fef2f2;
+  --on-error-container: #fef2f2;
+
+  /* Background */
+  --background: #F8FAFC;
+  --on-background: #1e293b;
+
+  /* Inverse */
+  --inverse-surface: #1e293b;
+  --inverse-on-surface: #F8FAFC;
+  --inverse-primary: #BFDBFE;
+
+  /* Surface tint */
+  --surface-tint: #1E3A8A;
+}

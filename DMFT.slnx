@@ -1,3 +1,12 @@
 <Solution>
-  <Project Path="DMFT/DMFT.csproj" />
+  <Project Path="DMFT.Core/DMFT.Core.csproj" Id="5d40ee35-4e4c-44ea-9a79-0e7f920908bd" />
+  <Project Path="DMFT.Test.App/DMFT.Test.App.csproj" Id="e67dd6a3-38e3-4704-9bae-3f646ad9b862" />
+  <Project Path="DMFT.Test.Core/DMFT.Test.Core.csproj" Id="07091b5b-4037-4fee-88e0-133c444ecbe3" />
+  <Project Path="DMFT.Test.Web/DMFT.Test.Web.csproj" Id="0a4b1583-3184-4a54-9dab-0fc613759c44" />
+  <Project Path="DMFT/DMFT.Shared/DMFT.Shared.csproj" Id="23000619-3b39-4902-8717-11ee7164a629" />
+  <Project Path="DMFT/DMFT.Web.Client/DMFT.Web.Client.csproj" Id="a321d56a-0eef-4fb3-a0b3-f30435a5cf53" />
+  <Project Path="DMFT/DMFT.Web/DMFT.Web.csproj" Id="03ebdece-5035-4b65-9640-4db8cfe1b6d1" />
+  <Project Path="DMFT/DMFT/DMFT.csproj" Id="176c4269-eee0-4ca9-8dcf-edeb61e3b56f">
+    <Deploy Solution="Release|*" />
+  </Project>
 </Solution>
