@@ -13,7 +13,7 @@
       either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
     <!-- For example: <RuntimeIdentifiers>maccatalyst-x64;maccatalyst-arm64</RuntimeIdentifiers> -->
 
-    <OutputType>Exe</OutputType>
+    <OutputType Condition="'$(TargetFramework)' != 'net10.0'">Exe</OutputType>
     <RootNamespace>DMFT</RootNamespace>
     <UseMaui>true</UseMaui>
     <SingleProject>true</SingleProject>
@@ -38,6 +38,9 @@
     <!-- Versions -->
     <ApplicationDisplayVersion>2.0</ApplicationDisplayVersion>
     <ApplicationVersion>2</ApplicationVersion>
+
+    <Version>1.0.0</Version>
+    <PackageVersion>1.0.0</PackageVersion>
 
     <!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
     <WindowsPackageType>None</WindowsPackageType>
