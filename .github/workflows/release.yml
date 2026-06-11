@@ -1,0 +1,84 @@
+name: Release Build
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-web:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: DMFT
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore DMFT.Web/DMFT.Web.csproj
+
+      - name: Build Web
+        run: dotnet publish DMFT.Web/DMFT.Web.csproj -c Release -o publish/web
+
+      - name: Upload Web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-release
+          path: DMFT/publish/web
+
+  build-maui-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: DMFT
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Install MAUI workload
+        run: dotnet workload install maui
+
+      - name: Restore
+        run: dotnet restore DMFT/DMFT.csproj
+
+      - name: Build MAUI Windows
+        run: dotnet publish DMFT/DMFT.csproj -c Release -f net10.0-windows10.0.19041.0 --self-contained -o publish/maui-win
+
+      - name: Zip MAUI package
+        run: Compress-Archive -Path publish/maui-win/* -DestinationPath publish/dmft-win.zip
+
+      - name: Upload MAUI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: maui-windows
+          path: DMFT/publish/dmft-win.zip
+
+  upload-to-release:
+    needs: [build-web, build-maui-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-release
+          path: artifacts/web
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: maui-windows
+          path: artifacts/maui
+
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload ${{ github.event.release.tag_name }} artifacts/maui/dmft-win.zip --clobber
