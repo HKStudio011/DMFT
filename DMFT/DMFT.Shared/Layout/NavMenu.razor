@@ -1,30 +1,28 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">DMFT</a>
-    </div>
+﻿@using DMFT.Shared.Services
+@inject IFormFactor FormFactor
+
+<div class="p-4 border-b border-outline-variant">
+    <a class="text-xl font-bold text-primary no-underline" href="">DMFT</a>
 </div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+<nav class="flex-1 p-2">
+    <NavLink class="flex items-center gap-3 px-4 py-2.5 rounded text-on-surface-variant hover:bg-surface-variant no-underline mb-1"
+             href="" Match="NavLinkMatch.All">
+        <span class="w-5 text-center">&#9654;</span>
+        <span>Main</span>
+    </NavLink>
+    <NavLink class="flex items-center gap-3 px-4 py-2.5 rounded text-on-surface-variant hover:bg-surface-variant no-underline mb-1"
+             href="/history">
+        <span class="w-5 text-center">&#9776;</span>
+        <span>History</span>
+    </NavLink>
+    <NavLink class="flex items-center gap-3 px-4 py-2.5 rounded text-on-surface-variant hover:bg-surface-variant no-underline mb-1"
+             href="/settings">
+        <span class="w-5 text-center">&#9881;</span>
+        <span>Settings</span>
+    </NavLink>
+</nav>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
+<div class="p-3 border-t border-outline-variant text-xs text-on-surface-dim">
+    <span>@FormFactor.GetFormFactor() - @FormFactor.GetPlatform()</span>
 </div>
-
