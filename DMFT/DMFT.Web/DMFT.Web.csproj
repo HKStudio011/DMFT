@@ -8,7 +8,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DMFT.Web.Client\DMFT.Web.Client.csproj" />
+    <ProjectReference Include="..\DMFT.Shared\DMFT.Shared.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.8" />
   </ItemGroup>
 
 </Project>
