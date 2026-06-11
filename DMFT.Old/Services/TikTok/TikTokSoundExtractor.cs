@@ -49,6 +49,14 @@ namespace DMFT.Services
                     if (itemsC.Count > 0 && itemsC[0].Displayed)
                         return itemsC[0];
 
+                    // Fallback: tìm thẻ <a> có href bắt đầu bằng /music/ (last-resort selector)
+                    var musicLinks = drv.FindElements(By.CssSelector("a[href^=\"/music/\"]"));
+                    foreach (var link in musicLinks)
+                    {
+                        if (link.Displayed)
+                            return link;
+                    }
+
                     return null; // tiếp tục chờ nếu chưa thấy gì
                 });
 

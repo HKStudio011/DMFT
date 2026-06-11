@@ -1,0 +1,102 @@
+@page "/history"
+@using DMFT.Core.Entities
+@using DMFT.Core.Services
+@using DMFT.Shared.Components
+@inject DownloadService DownloadSvc
+@inject DownloadQueue Queue
+@inject ToastService Toast
+
+<PageTitle>DMFT - History</PageTitle>
+
+<h1 class="text-2xl font-bold text-on-surface mb-6">Download History</h1>
+
+@if (_items.Count == 0)
+{
+    <div class="text-center py-16 text-on-surface-dim">
+        <p class="text-lg">No download history yet.</p>
+    </div>
+}
+else
+{
+    <div class="overflow-x-auto rounded-lg border border-outline-variant">
+        <table class="w-full text-sm bg-surface text-on-surface">
+            <thead class="bg-surface-container-low text-on-surface-variant border-b border-outline-variant">
+                <tr>
+                    <th class="text-left px-4 py-3">Platform</th>
+                    <th class="text-left px-4 py-3">Video ID</th>
+                    <th class="text-left px-4 py-3">Status</th>
+                    <th class="text-left px-4 py-3">Created</th>
+                    <th class="text-left px-4 py-3">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in _items.OrderByDescending(x => x.Time))
+                {
+                    <tr class="border-b border-outline-variant hover:bg-surface-container-low">
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-0.5 rounded text-xs font-medium text-on-primary bg-primary">@item.Platform</span>
+                        </td>
+                        <td class="px-4 py-3 text-on-surface-dim">@item.VideoId</td>
+                        <td class="px-4 py-3">
+                            <span class="text-sm @(item.Status == 4 ? "text-primary" : "text-on-surface-dim")">@GetStatusLabel(item.Status)</span>
+                        </td>
+                        <td class="px-4 py-3 text-on-surface-dim">@item.Time.ToLocalTime().ToString("g")</td>
+                        <td class="px-4 py-3 flex gap-2">
+                            <button class="px-3 py-1.5 rounded text-xs bg-primary text-on-primary hover:brightness-110 border-0 cursor-pointer"
+                                    @onclick="() => RetryAsync(item)">Retry</button>
+                            <button class="px-3 py-1.5 rounded text-xs bg-error text-on-error hover:brightness-110 border-0 cursor-pointer"
+                                    @onclick="() => DeleteAsync(item)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<DownloadItem> _items = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _items = (await DownloadSvc.GetHistoryAsync()).ToList();
+    }
+
+    private async Task RetryAsync(DownloadItem item)
+    {
+        try
+        {
+            item.Id = Guid.NewGuid();
+            item.Status = StatusCodes.New;
+            item.ProgressPercent = 0;
+            item.Time = DateTime.UtcNow;
+            item.CurrentFileName = string.Empty;
+            await DownloadSvc.AddDownloadAsync(item);
+            await Queue.EnqueueDownloadAsync(item);
+            Toast.Show($"Retrying: {item.VideoId}", ToastLevel.Info);
+        }
+        catch (Exception ex)
+        {
+            Toast.Show($"Error: {ex.Message}", ToastLevel.Error);
+        }
+    }
+
+    private async Task DeleteAsync(DownloadItem item)
+    {
+        await DownloadSvc.DeleteDownloadAsync(item.Id);
+        Toast.Show($"Deleted: {item.VideoId}", ToastLevel.Info);
+        _items = (await DownloadSvc.GetHistoryAsync()).ToList();
+    }
+
+    private static string GetStatusLabel(int status) => status switch
+    {
+        0 => "New",
+        1 => "Waiting",
+        2 => "Downloading",
+        3 => "Canceled",
+        4 => "Completed",
+        99 => "Error",
+        >= 100 => "Error",
+        _ => "Unknown"
+    };
+}

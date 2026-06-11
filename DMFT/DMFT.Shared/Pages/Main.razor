@@ -1,0 +1,152 @@
+@page "/"
+@using DMFT.Core.Services
+@using DMFT.Core.Entities
+@using DMFT.Shared.Components
+@inject DownloadService DownloadSvc
+@inject DownloadQueue Queue
+@inject ToastService Toast
+@implements IDisposable
+
+<PageTitle>DMFT - Download</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-on-surface m-0">Downloads</h1>
+    <button class="px-4 py-2 rounded bg-primary text-on-primary hover:brightness-110 border-0 cursor-pointer text-sm font-medium flex items-center gap-2"
+            @onclick="ShowAddModal">
+        <span>+</span> Add URLs
+    </button>
+</div>
+
+<AddModal @ref="addModal" OnAdd="AddUrls" />
+
+@if (_items.Count == 0)
+{
+    <div class="text-center py-16 text-on-surface-dim">
+        <div class="text-5xl mb-4 opacity-50">&#9654;</div>
+        <p class="text-lg">No downloads yet. Click <strong>Add URLs</strong> to get started.</p>
+    </div>
+}
+else
+{
+    <div class="space-y-3">
+        @foreach (var item in _items.OrderByDescending(x => x.Time))
+        {
+            <div class="bg-surface rounded-lg p-4 flex flex-col gap-2 border border-outline-variant">
+                <div class="flex items-center gap-3">
+                    <span class="px-2 py-0.5 rounded text-xs font-medium text-on-primary bg-primary">@item.Platform</span>
+                    <span class="flex-1 text-sm text-on-surface truncate">@item.Url</span>
+                    <span class="text-xs text-on-surface-variant">@GetStatusLabel(item.Status)</span>
+                    @if (string.IsNullOrEmpty(item.CurrentFileName))
+                    {
+                        <span class="text-xs px-2 py-0.5 rounded bg-error text-on-error">Missing</span>
+                    }
+                </div>
+                @if (item.ProgressPercent > 0 && item.ProgressPercent < 100)
+                {
+                    <div class="w-full h-2 bg-surface-variant rounded-full overflow-hidden">
+                        <div class="h-full bg-primary rounded-full transition-all duration-300" style="width: @item.ProgressPercent%"></div>
+                    </div>
+                    <span class="text-xs text-on-surface-dim">@item.ProgressPercent%</span>
+                }
+                <div class="flex gap-2 mt-1">
+                    <button class="px-3 py-1.5 rounded text-xs bg-primary text-on-primary hover:brightness-110 border-0 cursor-pointer"
+                            @onclick="() => DownloadAsync(item)">Download</button>
+                    <button class="px-3 py-1.5 rounded text-xs bg-error text-on-error hover:brightness-110 border-0 cursor-pointer"
+                            @onclick="() => RemoveItem(item)">Remove</button>
+                    @if (!string.IsNullOrEmpty(item.CurrentFileName))
+                    {
+                        <span class="px-3 py-1.5 rounded text-xs bg-primary-container text-on-primary-container">@item.CurrentFileName</span>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<LoadingModal @ref="loadingModal" />
+
+@code {
+    private List<DownloadItem> _items = new();
+    private AddModal? addModal;
+    private LoadingModal? loadingModal;
+    private Timer? _timer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadItems();
+        _timer = new Timer(async _ => await InvokeAsync(LoadItems), null, 5000, 5000);
+    }
+
+    public void Dispose() => _timer?.Dispose();
+
+    private async Task LoadItems()
+    {
+        _items = (await DownloadSvc.GetMainLinksAsync()).ToList();
+        StateHasChanged();
+    }
+
+    private void ShowAddModal() => addModal?.Show();
+
+    private async Task AddUrls(string content)
+    {
+        if (string.IsNullOrWhiteSpace(content)) return;
+        var urls = content.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var parser = new VideoLinkParser();
+        foreach (var url in urls)
+        {
+            parser.TryParseVideoId(url, out var videoId);
+            var item = new DownloadItem
+            {
+                Id = Guid.NewGuid(),
+                Url = url,
+                OriginalUrl = url,
+                VideoId = videoId ?? string.Empty,
+                Platform = parser.GetPlatform(url).ToString(),
+                Status = StatusCodes.New,
+                ProgressPercent = 0,
+                Time = DateTime.UtcNow
+            };
+            await DownloadSvc.AddDownloadAsync(item);
+        }
+        await LoadItems();
+        Toast.Show($"Added {urls.Length} URL(s)", ToastLevel.Success);
+    }
+
+    private async Task DownloadAsync(DownloadItem item)
+    {
+        loadingModal?.Show();
+        try
+        {
+            await Queue.EnqueueDownloadAsync(item);
+            Toast.Show($"Downloading: {item.VideoId}", ToastLevel.Success);
+        }
+        catch (Exception ex)
+        {
+            Toast.Show($"Error: {ex.Message}", ToastLevel.Error);
+        }
+        finally
+        {
+            loadingModal?.Hide();
+            await LoadItems();
+        }
+    }
+
+    private async Task RemoveItem(DownloadItem item)
+    {
+        await DownloadSvc.DeleteDownloadAsync(item.Id);
+        Toast.Show($"Removed: {item.VideoId}", ToastLevel.Info);
+        await LoadItems();
+    }
+
+    private static string GetStatusLabel(int status) => status switch
+    {
+        0 => "New",
+        1 => "Waiting",
+        2 => "Downloading",
+        3 => "Canceled",
+        4 => "Completed",
+        99 => "Error",
+        >= 100 => "Error",
+        _ => "Unknown"
+    };
+}
