@@ -6,7 +6,7 @@ public class DownloadItem
     public string Url { get; set; } = string.Empty;
     public string Platform { get; set; } = "Unknown";
     public int Status { get; set; }
-    public DateTime Time { get; set; } = DateTime.Now;
+    public DateTime Time { get; set; } = DateTime.UtcNow;
     public string VideoId { get; set; } = string.Empty;
     public string OriginalUrl { get; set; } = string.Empty;
     public string ThumbnailUrl { get; set; } = string.Empty;

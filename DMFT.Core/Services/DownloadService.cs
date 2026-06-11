@@ -85,9 +85,8 @@ public class DownloadService
     public async Task ClearDownloadsAsync(Func<DownloadItem, bool>? filter = null)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
-        var items = filter == null
-            ? await db.DownloadItems.ToListAsync()
-            : db.DownloadItems.Where(x => filter(x)).ToList();
+        var allItems = await db.DownloadItems.ToListAsync();
+        var items = filter == null ? allItems : allItems.Where(filter).ToList();
         db.DownloadItems.RemoveRange(items);
         await db.SaveChangesAsync();
     }
