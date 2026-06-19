@@ -61,12 +61,21 @@ public static class MauiProgram
 
         var app = builder.Build();
 
-        // Auto-apply EF Core migrations on startup
-        using (var scope = app.Services.CreateScope())
+        // Auto-apply pending EF Core migrations on startup
+        try
         {
-            var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
-            using var context = factory.CreateDbContext();
-            context.Database.Migrate();
+            using (var scope = app.Services.CreateScope())
+            {
+                var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+                using (var context = factory.CreateDbContext())
+                {
+                    context.Database.Migrate();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Database migration failed: {ex.Message}");
         }
 
         return app;
