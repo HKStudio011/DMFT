@@ -53,7 +53,7 @@ try
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
         using (var context = factory.CreateDbContext())
         {
-            context.Database.Migrate();
+            await context.Database.MigrateAsync();
         }
     }
 }
