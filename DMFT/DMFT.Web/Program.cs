@@ -45,6 +45,24 @@ builder.Services.AddSingleton<IAppUpdateService>(sp =>
 
 var app = builder.Build();
 
+// Auto-apply pending EF Core migrations on startup
+try
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+        using (var context = factory.CreateDbContext())
+        {
+            context.Database.Migrate();
+        }
+    }
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogWarning(ex, "Database migration failed (non-fatal)");
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseWebAssemblyDebugging();
