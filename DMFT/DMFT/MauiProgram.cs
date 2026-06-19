@@ -3,6 +3,7 @@ using DMFT.Core.Services;
 using DMFT.Services;
 using DMFT.Shared.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace DMFT;
@@ -58,6 +59,16 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
 
-        return builder.Build();
+        var app = builder.Build();
+
+        // Auto-apply EF Core migrations on startup
+        using (var scope = app.Services.CreateScope())
+        {
+            var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+            using var context = factory.CreateDbContext();
+            context.Database.Migrate();
+        }
+
+        return app;
     }
 }
