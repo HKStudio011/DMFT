@@ -187,7 +187,7 @@
         if (formatKey != null)
         {
             var match = _qualityPresets.FirstOrDefault(p => p.Value.format == formatKey.Value);
-            QualityPreset = match.Key;
+            QualityPreset = match.Key ?? "best";
         }
 
         var extra = await db.AppSettings.FindAsync("ytdlp_extra_args");
