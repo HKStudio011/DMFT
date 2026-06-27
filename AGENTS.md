@@ -10,6 +10,9 @@ For dev servers, run them in background and write logs to a file.
 dotnet restore DMFT/DMFT.csproj
 dotnet build DMFT/DMFT.csproj -c Release
 
+# Build + install playwright browsers
+dotnet build DMFT/DMFT/DMFT.csproj -c Release && pwsh DMFT/DMFT/bin/Debug/net10.0/playwright.ps1 install chromium
+
 ```
 
 ## Project Structure
@@ -21,6 +24,7 @@ dotnet build DMFT/DMFT.csproj -c Release
 
 - .NET 10.0 SDK + MAUI workload
 - **yt-dlp**: Required in `./yt-dlp` folder (see `DMFT/Model/YtDlpConfig.cs` for path resolution)
+- **Playwright browsers**: Required for TikTok sound extraction. After restore/build, run `pwsh DMFT/DMFT/bin/Debug/net10.0/playwright.ps1 install chromium`
 
 ## Entry Points
 
