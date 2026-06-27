@@ -36,14 +36,20 @@ public class YtDlpService : IMediaDownloader
     {
         string extra = _config.ExtraArguments;
         string fmt = _config.FormatString;
-        string args = $"--newline --progress-template \"%(progress)j\" -o \"{outputPath}\" -f \"{fmt}\" --merge-output-format mp4 {extra} \"{videoUrl}\"".Trim();
+        string outputArg = !string.IsNullOrWhiteSpace(_config.OutputTemplate)
+            ? _config.OutputTemplate
+            : outputPath;
+        string args = $"--newline --progress-template \"%(progress)j\" -o \"{outputArg}\" -f \"{fmt}\" --merge-output-format mp4 {extra} \"{videoUrl}\"".Trim();
         return RunYtDlpAsync(args);
     }
 
     public Task DownloadAudioAsync(string videoUrl, string outputPath)
     {
         string extra = _config.ExtraArguments;
-        string args = $"--newline --progress-template \"%(progress)j\" -o \"{outputPath}\" -x --audio-format mp3 --audio-quality 0 {extra} \"{videoUrl}\"".Trim();
+        string outputArg = !string.IsNullOrWhiteSpace(_config.OutputTemplate)
+            ? _config.OutputTemplate
+            : outputPath;
+        string args = $"--newline --progress-template \"%(progress)j\" -o \"{outputArg}\" -x --audio-format mp3 --audio-quality 0 {extra} \"{videoUrl}\"".Trim();
         return RunYtDlpAsync(args);
     }
 
