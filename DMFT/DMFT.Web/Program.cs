@@ -32,6 +32,7 @@ builder.Services.AddSingleton<IVideoLinkParser, VideoLinkParser>();
 builder.Services.AddSingleton<IMediaDownloader, YtDlpService>();
 builder.Services.AddSingleton<IYtDlpUpdateService, YtDlpUpdateService>();
 builder.Services.AddSingleton<IDownloadEngine, DownloadEngine>();
+builder.Services.AddSingleton<ITikTokSoundExtractor, TikTokSoundExtractor>();
 builder.Services.AddSingleton<IDownloadQueue, DownloadQueue>();
 builder.Services.AddSingleton<ToastService>();
 
