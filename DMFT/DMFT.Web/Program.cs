@@ -36,6 +36,27 @@ builder.Services.AddSingleton<ITikTokSoundExtractor, TikTokSoundExtractor>();
 builder.Services.AddSingleton<IDownloadQueue, DownloadQueue>();
 builder.Services.AddSingleton<ToastService>();
 
+// Initialize queue settings from DB
+builder.Services.AddSingleton(sp =>
+{
+    var queue = sp.GetRequiredService<IDownloadQueue>();
+    try
+    {
+        using var db = sp.GetRequiredService<IDbContextFactory<AppDbContext>>().CreateDbContext();
+
+        var conc = db.AppSettings.Find("maxConcurrent");
+        if (conc != null && int.TryParse(conc.Value, out var c))
+            queue.MaxConcurrent = Math.Max(1, c);
+
+        var delay = db.AppSettings.Find("delayBetweenMs");
+        if (delay != null && int.TryParse(delay.Value, out var d))
+            queue.DelayBetweenMs = Math.Max(500, d);
+    }
+    catch { /* Keep defaults */ }
+
+    return queue;
+});
+
 // App update
 builder.Services.AddSingleton<IAppUpdateService>(sp =>
 {
