@@ -36,7 +36,6 @@ public class YtDlpService : IMediaDownloader
     {
         string extra = _config.ExtraArguments;
         string fmt = _config.FormatString;
-        if (string.IsNullOrWhiteSpace(fmt)) fmt = "bestvideo[ext=mp4]+bestaudio/bestvideo[ext=mp4]+bestaudio/best";
         string args = $"--newline --progress-template \"%(progress)j\" -o \"{outputPath}\" -f \"{fmt}\" --merge-output-format mp4 {extra} \"{videoUrl}\"".Trim();
         return RunYtDlpAsync(args);
     }
