@@ -3,7 +3,7 @@
 @using DMFT.Core.Entities
 @using DMFT.Shared.Components
 @inject DownloadService DownloadSvc
-@inject DownloadQueue Queue
+@inject IDownloadQueue Queue
 @inject ToastService Toast
 @implements IDisposable
 
@@ -28,6 +28,19 @@
 }
 else
 {
+    <div class="mb-3 flex items-center gap-2">
+        <span class="text-sm font-bold whitespace-nowrap text-on-surface">Set All Mode:</span>
+        <select class="form-select form-select-sm px-2 py-1 rounded border border-outline-variant bg-surface text-on-surface text-sm"
+                @bind="_selectedModeForAll">
+            <option value="@DownloadMode.Video">Video</option>
+            <option value="@DownloadMode.AudioOnly">Audio Only</option>
+            <option value="@DownloadMode.AudioOriginOnly">Audio Origin</option>
+            <option value="@DownloadMode.VideoAndAudioOrigin">Video + Audio Origin</option>
+        </select>
+        <button class="px-3 py-1 rounded text-xs bg-primary-container text-on-primary-container hover:brightness-110 border-0 cursor-pointer"
+                @onclick="ApplyModeToAll">Apply to All</button>
+    </div>
+
     <div class="space-y-3">
         @foreach (var item in _items.OrderByDescending(x => x.Time))
         {
@@ -40,6 +53,16 @@ else
                     {
                         <span class="text-xs px-2 py-0.5 rounded bg-error text-on-error">Missing</span>
                     }
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-on-surface-variant">Mode:</span>
+                    <select class="form-select form-select-sm px-2 py-0.5 rounded border border-outline-variant bg-surface text-on-surface text-xs"
+                            @bind="item.DownloadMode">
+                        <option value="@DownloadMode.Video">Video</option>
+                        <option value="@DownloadMode.AudioOnly">Audio Only</option>
+                        <option value="@DownloadMode.AudioOriginOnly">Audio Origin</option>
+                        <option value="@DownloadMode.VideoAndAudioOrigin">Video + Audio Origin</option>
+                    </select>
                 </div>
                 @if (item.ProgressPercent > 0 && item.ProgressPercent < 100)
                 {
@@ -70,6 +93,7 @@ else
     private AddModal? addModal;
     private LoadingModal? loadingModal;
     private Timer? _timer;
+    private int _selectedModeForAll = DownloadMode.Video;
 
     protected override async Task OnInitializedAsync()
     {
@@ -103,6 +127,7 @@ else
                 VideoId = videoId ?? string.Empty,
                 Platform = parser.GetPlatform(url).ToString(),
                 Status = StatusCodes.New,
+                DownloadMode = DownloadMode.Video,
                 ProgressPercent = 0,
                 Time = DateTime.UtcNow
             };
@@ -110,6 +135,15 @@ else
         }
         await LoadItems();
         Toast.Show($"Added {urls.Length} URL(s)", ToastLevel.Success);
+    }
+
+    private void ApplyModeToAll()
+    {
+        foreach (var item in _items)
+        {
+            item.DownloadMode = _selectedModeForAll;
+        }
+        Toast.Show($"Applied mode to all {_items.Count} item(s)", ToastLevel.Info);
     }
 
     private async Task DownloadAsync(DownloadItem item)
@@ -146,7 +180,10 @@ else
         3 => "Canceled",
         4 => "Completed",
         99 => "Error",
-        >= 100 => "Error",
+        100 => "Video + Audio Origin Error",
+        101 => "Video Error",
+        102 => "Audio Origin Error",
+        103 => "Audio Only Error",
         _ => "Unknown"
     };
 }
