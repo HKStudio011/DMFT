@@ -12,14 +12,16 @@ public class DownloadEngine : IDownloadEngine
 {
     private readonly IMediaDownloader _mediaDownloader;
     private readonly DownloadService _downloadService;
+    private readonly ITikTokSoundExtractor _soundExtractor;
     private DownloadItem? _currentItem;
     private Timer? _progressTimer;
     private const int ProgressRefreshMs = 500;
 
-    public DownloadEngine(IMediaDownloader mediaDownloader, DownloadService downloadService)
+    public DownloadEngine(IMediaDownloader mediaDownloader, DownloadService downloadService, ITikTokSoundExtractor soundExtractor)
     {
         _mediaDownloader = mediaDownloader;
         _downloadService = downloadService;
+        _soundExtractor = soundExtractor;
         _mediaDownloader.OnProgress += HandleProgress;
     }
 
@@ -54,8 +56,76 @@ public class DownloadEngine : IDownloadEngine
         try
         {
             string videoDest = Path.Combine(item.SaveLocation, $"{item.VideoId}_video.mp4");
-            item.CurrentFileName = Path.GetFileName(videoDest);
-            await _mediaDownloader.DownloadAsync(item.Url, videoDest, noWatermark: true);
+            string audioDest = Path.Combine(item.SaveLocation, $"{item.VideoId}_audio.mp3");
+
+            if (item.DownloadMode == DownloadMode.VideoAndAudioOrigin || item.DownloadMode == DownloadMode.AudioOriginOnly)
+            {
+                var (soundName, soundUrl) = await _soundExtractor.GetOriginalSoundAsync(item.Url);
+                if (!string.IsNullOrWhiteSpace(soundUrl))
+                {
+                    item.OriginalSoundName = soundName ?? "";
+                    item.OriginalSoundUrl = soundUrl;
+                    item.OriginalUrl = item.Url;
+                    await _downloadService.UpdateDownloadAsync(item);
+                }
+            }
+
+            Task? videoTask = null;
+            Task? audioTask = null;
+
+            switch (item.DownloadMode)
+            {
+                case DownloadMode.VideoAndAudioOrigin:
+                    item.CurrentFileName = Path.GetFileName(videoDest);
+                    videoTask = _mediaDownloader.DownloadAsync(item.Url, videoDest, noWatermark: true);
+                    if (!string.IsNullOrWhiteSpace(item.OriginalSoundUrl))
+                    {
+                        item.CurrentFileName = Path.GetFileName(audioDest);
+                        audioTask = _mediaDownloader.DownloadAudioAsync(item.OriginalSoundUrl, audioDest);
+                    }
+                    if (videoTask != null && audioTask != null)
+                        await Task.WhenAll(videoTask, audioTask);
+                    else
+                        throw new Exception("Missing download tasks");
+                    break;
+
+                case DownloadMode.Video:
+                    item.CurrentFileName = Path.GetFileName(videoDest);
+                    videoTask = _mediaDownloader.DownloadAsync(item.Url, videoDest, noWatermark: true);
+                    if (videoTask != null)
+                        await videoTask;
+                    else
+                        throw new Exception("Video download task missing");
+                    break;
+
+                case DownloadMode.AudioOriginOnly:
+                    if (!string.IsNullOrWhiteSpace(item.OriginalSoundUrl))
+                    {
+                        item.CurrentFileName = Path.GetFileName(audioDest);
+                        audioTask = _mediaDownloader.DownloadAudioAsync(item.OriginalSoundUrl, audioDest);
+                        if (audioTask != null)
+                            await audioTask;
+                        else
+                            throw new Exception("Audio origin download failed");
+                    }
+                    else
+                        throw new Exception("No audio URL");
+                    break;
+
+                case DownloadMode.AudioOnly:
+                    if (!string.IsNullOrWhiteSpace(item.Url))
+                    {
+                        item.CurrentFileName = Path.GetFileName(audioDest);
+                        audioTask = _mediaDownloader.DownloadAudioAsync(item.Url, audioDest);
+                        if (audioTask != null)
+                            await audioTask;
+                        else
+                            throw new Exception("Audio only failed");
+                    }
+                    else
+                        throw new Exception("Video URL missing for audio only");
+                    break;
+            }
 
             item.Status = StatusCodes.Success;
             _progressTimer?.Dispose();
@@ -64,7 +134,14 @@ public class DownloadEngine : IDownloadEngine
         }
         catch (Exception)
         {
-            item.Status = item.DownloadMode == 0 ? StatusCodes.VideoError : StatusCodes.Error;
+            item.Status = item.DownloadMode switch
+            {
+                DownloadMode.VideoAndAudioOrigin => StatusCodes.VideoAudioOriginError,
+                DownloadMode.Video => StatusCodes.VideoError,
+                DownloadMode.AudioOriginOnly => StatusCodes.AudioOriginError,
+                DownloadMode.AudioOnly => StatusCodes.AudioOnlyError,
+                _ => StatusCodes.Error
+            };
             _progressTimer?.Dispose();
             _progressTimer = null;
             await _downloadService.UpdateDownloadAsync(item);
