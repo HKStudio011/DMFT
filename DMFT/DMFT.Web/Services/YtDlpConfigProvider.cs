@@ -22,25 +22,12 @@ public class YtDlpConfigProvider : IYtDlpConfigProvider
 
     public async Task InitializeFromDbAsync(IDbContextFactory<AppDbContext> dbFactory)
     {
-        try
-        {
-            using var db = await dbFactory.CreateDbContextAsync();
-
-            var extraArgs = (await db.AppSettings.FindAsync("ytdlp_extra_args"))?.Value;
-            if (!string.IsNullOrWhiteSpace(extraArgs))
-                ExtraArguments = extraArgs;
-
-            var outputTemplate = (await db.AppSettings.FindAsync("ytdlp_output_template"))?.Value;
-            if (!string.IsNullOrWhiteSpace(outputTemplate))
-                OutputTemplate = outputTemplate;
-
-            var formatString = (await db.AppSettings.FindAsync("ytdlp_format"))?.Value;
-            if (!string.IsNullOrWhiteSpace(formatString))
-                FormatString = formatString;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[YtDlpConfigProvider] Failed to load config from DB: {ex.Message}");
-        }
+        var (extraArgs, outputTemplate, formatString) = await AppSettingsReader.ReadYtDlpConfigAsync(dbFactory);
+        if (!string.IsNullOrWhiteSpace(extraArgs))
+            ExtraArguments = extraArgs;
+        if (!string.IsNullOrWhiteSpace(outputTemplate))
+            OutputTemplate = outputTemplate;
+        if (!string.IsNullOrWhiteSpace(formatString))
+            FormatString = formatString;
     }
 }

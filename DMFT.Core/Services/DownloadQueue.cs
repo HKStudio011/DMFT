@@ -37,21 +37,11 @@ public class DownloadQueue : IDownloadQueue
 
     public async Task InitializeFromDbAsync(IDbContextFactory<AppDbContext> dbFactory)
     {
-        try
-        {
-            using var db = await dbFactory.CreateDbContextAsync();
-            var conc = await db.AppSettings.FindAsync("maxConcurrent");
-            if (conc != null && int.TryParse(conc.Value, out var c))
-                MaxConcurrent = Math.Max(1, c);
-
-            var delay = await db.AppSettings.FindAsync("delayBetweenMs");
-            if (delay != null && int.TryParse(delay.Value, out var d))
-                DelayBetweenMs = Math.Max(500, d);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[DownloadQueue] Failed to load settings from DB: {ex.Message}");
-        }
+        var (maxConcurrent, delayBetweenMs) = await AppSettingsReader.ReadQueueSettingsAsync(dbFactory);
+        if (maxConcurrent.HasValue)
+            MaxConcurrent = Math.Max(1, maxConcurrent.Value);
+        if (delayBetweenMs.HasValue)
+            DelayBetweenMs = Math.Max(500, delayBetweenMs.Value);
     }
 
     public async Task EnqueueDownloadAsync(DownloadItem item)
