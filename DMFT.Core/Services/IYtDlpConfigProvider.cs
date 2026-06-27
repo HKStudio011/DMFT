@@ -1,3 +1,6 @@
+using DMFT.Core.Data;
+using Microsoft.EntityFrameworkCore;
+
 namespace DMFT.Core.Services;
 
 public interface IYtDlpConfigProvider
@@ -6,4 +9,5 @@ public interface IYtDlpConfigProvider
     string ExtraArguments { get; }
     string OutputTemplate { get; }
     string FormatString { get; }
+    Task InitializeFromDbAsync(IDbContextFactory<AppDbContext> dbFactory);
 }

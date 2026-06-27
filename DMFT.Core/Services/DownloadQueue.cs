@@ -1,10 +1,13 @@
 using System.Collections.Concurrent;
+using DMFT.Core.Data;
 using DMFT.Core.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DMFT.Core.Services;
 
 public interface IDownloadQueue
 {
+    Task InitializeFromDbAsync(IDbContextFactory<AppDbContext> dbFactory);
     Task EnqueueDownloadAsync(DownloadItem item);
     bool IsProcessing { get; }
     int MaxConcurrent { get; set; }
@@ -30,6 +33,25 @@ public class DownloadQueue : IDownloadQueue
     {
         _engine = engine;
         _downloadService = downloadService;
+    }
+
+    public async Task InitializeFromDbAsync(IDbContextFactory<AppDbContext> dbFactory)
+    {
+        try
+        {
+            using var db = await dbFactory.CreateDbContextAsync();
+            var conc = await db.AppSettings.FindAsync("maxConcurrent");
+            if (conc != null && int.TryParse(conc.Value, out var c))
+                MaxConcurrent = Math.Max(1, c);
+
+            var delay = await db.AppSettings.FindAsync("delayBetweenMs");
+            if (delay != null && int.TryParse(delay.Value, out var d))
+                DelayBetweenMs = Math.Max(500, d);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[DownloadQueue] Failed to load settings from DB: {ex.Message}");
+        }
     }
 
     public async Task EnqueueDownloadAsync(DownloadItem item)

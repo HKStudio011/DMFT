@@ -12,34 +12,35 @@ public class YtDlpConfigProvider : IYtDlpConfigProvider
     public string OutputTemplate { get; private set; } = "";
     public string FormatString { get; private set; } = "bestvideo[ext=mp4]+bestaudio/bestvideo[ext=mp4]+bestaudio/best";
 
-    public YtDlpConfigProvider(IStoragePathProvider storage, IDbContextFactory<AppDbContext> dbFactory)
+    public YtDlpConfigProvider(IStoragePathProvider storage)
     {
         var ytDlpPath = Path.Combine(storage.GetAppDataPath(), "yt-dlp");
         ExecutablePath = Path.Combine(ytDlpPath, "yt-dlp.exe");
         if (!File.Exists(ExecutablePath))
             ExecutablePath = Path.Combine(AppContext.BaseDirectory, "yt-dlp", "yt-dlp.exe");
-
-        LoadConfig(dbFactory);
     }
 
-    private void LoadConfig(IDbContextFactory<AppDbContext> dbFactory)
+    public async Task InitializeFromDbAsync(IDbContextFactory<AppDbContext> dbFactory)
     {
         try
         {
-            using var db = dbFactory.CreateDbContext();
+            using var db = await dbFactory.CreateDbContextAsync();
 
-            var extraArgs = db.AppSettings.Find("ytdlp_extra_args")?.Value;
+            var extraArgs = (await db.AppSettings.FindAsync("ytdlp_extra_args"))?.Value;
             if (!string.IsNullOrWhiteSpace(extraArgs))
                 ExtraArguments = extraArgs;
 
-            var outputTemplate = db.AppSettings.Find("ytdlp_output_template")?.Value;
+            var outputTemplate = (await db.AppSettings.FindAsync("ytdlp_output_template"))?.Value;
             if (!string.IsNullOrWhiteSpace(outputTemplate))
                 OutputTemplate = outputTemplate;
 
-            var formatString = db.AppSettings.Find("ytdlp_format")?.Value;
+            var formatString = (await db.AppSettings.FindAsync("ytdlp_format"))?.Value;
             if (!string.IsNullOrWhiteSpace(formatString))
                 FormatString = formatString;
         }
-        catch { /* Keep defaults */ }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[YtDlpConfigProvider] Failed to load config from DB: {ex.Message}");
+        }
     }
 }
