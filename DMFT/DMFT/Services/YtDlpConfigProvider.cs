@@ -43,4 +43,3 @@ public class YtDlpConfigProvider : IYtDlpConfigProvider
         catch { /* Keep defaults */ }
     }
 }
-}
