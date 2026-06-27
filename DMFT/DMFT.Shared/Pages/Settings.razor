@@ -225,6 +225,20 @@
     {
         using var db = await DbFactory.CreateDbContextAsync();
 
+        // Validate ExtraArgs
+        if (!string.IsNullOrWhiteSpace(ExtraArgs))
+        {
+            string[] dangerous = { ";", "|", "`", "$", "&&", "||", "\n" };
+            foreach (var c in dangerous)
+            {
+                if (ExtraArgs.Contains(c))
+                {
+                    Toast.Show($"Extra arguments contain invalid character: {c}", ToastLevel.Error);
+                    return;
+                }
+            }
+        }
+
         await SetAppSettingAsync(db, "theme", ThemeMode);
         await SetAppSettingAsync(db, "accentColor", AccentColor);
         await SetAppSettingAsync(db, "defaultPath", DefaultPath);
