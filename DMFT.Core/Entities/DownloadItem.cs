@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations.Schema;
+using DMFT.Core.Services;
+
 namespace DMFT.Core.Entities;
 
 public class DownloadItem
@@ -21,4 +24,30 @@ public class DownloadItem
     public int EtaSeconds { get; set; }
     public int ProgressPercent { get; set; }
     public string CurrentFileName { get; set; } = string.Empty;
+
+    [NotMapped]
+    public bool DownloadVideo
+    {
+        get => (DownloadMode & (int)Services.DownloadMode.Video) != 0;
+        set => SetFlag((int)Services.DownloadMode.Video, value);
+    }
+
+    [NotMapped]
+    public bool DownloadAudio
+    {
+        get => (DownloadMode & (int)Services.DownloadMode.Audio) != 0;
+        set => SetFlag((int)Services.DownloadMode.Audio, value);
+    }
+
+    [NotMapped]
+    public bool DownloadOriginAudio
+    {
+        get => (DownloadMode & (int)Services.DownloadMode.OriginAudio) != 0;
+        set => SetFlag((int)Services.DownloadMode.OriginAudio, value);
+    }
+
+    private void SetFlag(int bit, bool on)
+    {
+        DownloadMode = on ? DownloadMode | bit : DownloadMode & ~bit;
+    }
 }
