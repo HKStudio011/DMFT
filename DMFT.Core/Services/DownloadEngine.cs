@@ -48,6 +48,8 @@ public class DownloadEngine : IDownloadEngine
         item.ProgressPercent = 0;
         await _downloadService.UpdateDownloadAsync(item);
 
+        var mode = (DownloadMode)item.DownloadMode;
+
         _progressTimer = new Timer(async _ =>
         {
             await _downloadService.UpdateDownloadAsync(item);
@@ -57,9 +59,9 @@ public class DownloadEngine : IDownloadEngine
         {
             string videoDest = Path.Combine(item.SaveLocation, $"{item.VideoId}_video.mp4");
             string audioDest = Path.Combine(item.SaveLocation, $"{item.VideoId}_audio.mp3");
+            string originDest = Path.Combine(item.SaveLocation, $"{item.VideoId}_origin.mp3");
 
-            var modeFlag = (DownloadMode)item.DownloadMode;
-            if (modeFlag.HasFlag(DownloadMode.OriginAudio))
+            if (mode.HasFlag(DownloadMode.OriginAudio))
             {
                 var (soundName, soundUrl) = await _soundExtractor.GetOriginalSoundAsync(item.Url);
                 if (!string.IsNullOrWhiteSpace(soundUrl))
@@ -71,62 +73,30 @@ public class DownloadEngine : IDownloadEngine
                 }
             }
 
-            Task? videoTask = null;
-            Task? audioTask = null;
+            var tasks = new List<Task>();
 
-            switch ((DownloadMode)item.DownloadMode)
+            if (mode.HasFlag(DownloadMode.Video))
             {
-                case DownloadMode.Video | DownloadMode.OriginAudio:
-                    item.CurrentFileName = Path.GetFileName(videoDest);
-                    videoTask = _mediaDownloader.DownloadAsync(item.Url, videoDest, noWatermark: true);
-                    if (!string.IsNullOrWhiteSpace(item.OriginalSoundUrl))
-                    {
-                        item.CurrentFileName = Path.GetFileName(audioDest);
-                        audioTask = _mediaDownloader.DownloadAudioAsync(item.OriginalSoundUrl, audioDest);
-                    }
-                    if (videoTask != null && audioTask != null)
-                        await Task.WhenAll(videoTask, audioTask);
-                    else
-                        throw new Exception("Missing download tasks");
-                    break;
-
-                case DownloadMode.Video:
-                    item.CurrentFileName = Path.GetFileName(videoDest);
-                    videoTask = _mediaDownloader.DownloadAsync(item.Url, videoDest, noWatermark: true);
-                    if (videoTask != null)
-                        await videoTask;
-                    else
-                        throw new Exception("Video download task missing");
-                    break;
-
-                case DownloadMode.OriginAudio:
-                    if (!string.IsNullOrWhiteSpace(item.OriginalSoundUrl))
-                    {
-                        item.CurrentFileName = Path.GetFileName(audioDest);
-                        audioTask = _mediaDownloader.DownloadAudioAsync(item.OriginalSoundUrl, audioDest);
-                        if (audioTask != null)
-                            await audioTask;
-                        else
-                            throw new Exception("Audio origin download failed");
-                    }
-                    else
-                        throw new Exception("No audio URL");
-                    break;
-
-                case DownloadMode.Audio:
-                    if (!string.IsNullOrWhiteSpace(item.Url))
-                    {
-                        item.CurrentFileName = Path.GetFileName(audioDest);
-                        audioTask = _mediaDownloader.DownloadAudioAsync(item.Url, audioDest);
-                        if (audioTask != null)
-                            await audioTask;
-                        else
-                            throw new Exception("Audio only failed");
-                    }
-                    else
-                        throw new Exception("Video URL missing for audio only");
-                    break;
+                item.CurrentFileName = Path.GetFileName(videoDest);
+                tasks.Add(_mediaDownloader.DownloadAsync(item.Url, videoDest, noWatermark: true));
             }
+
+            if (mode.HasFlag(DownloadMode.Audio))
+            {
+                item.CurrentFileName = Path.GetFileName(audioDest);
+                tasks.Add(_mediaDownloader.DownloadAudioAsync(item.Url, audioDest));
+            }
+
+            if (mode.HasFlag(DownloadMode.OriginAudio) && !string.IsNullOrWhiteSpace(item.OriginalSoundUrl))
+            {
+                item.CurrentFileName = Path.GetFileName(originDest);
+                tasks.Add(_mediaDownloader.DownloadAudioAsync(item.OriginalSoundUrl, originDest));
+            }
+
+            if (tasks.Count == 0)
+                throw new Exception("No download tasks selected");
+
+            await Task.WhenAll(tasks);
 
             item.Status = StatusCodes.Success;
             _progressTimer?.Dispose();
@@ -135,14 +105,14 @@ public class DownloadEngine : IDownloadEngine
         }
         catch (Exception)
         {
-            item.Status = ((DownloadMode)item.DownloadMode) switch
-            {
-                DownloadMode.Video | DownloadMode.OriginAudio => StatusCodes.VideoAudioOriginError,
-                DownloadMode.Video => StatusCodes.VideoError,
-                DownloadMode.OriginAudio => StatusCodes.AudioOriginError,
-                DownloadMode.Audio => StatusCodes.AudioOnlyError,
-                _ => StatusCodes.Error
-            };
+            if (mode.HasFlag(DownloadMode.Video))
+                item.Status = StatusCodes.VideoError;
+            else if (mode.HasFlag(DownloadMode.Audio))
+                item.Status = StatusCodes.AudioOnlyError;
+            else if (mode.HasFlag(DownloadMode.OriginAudio))
+                item.Status = StatusCodes.AudioOriginError;
+            else
+                item.Status = StatusCodes.Error;
             _progressTimer?.Dispose();
             _progressTimer = null;
             await _downloadService.UpdateDownloadAsync(item);
