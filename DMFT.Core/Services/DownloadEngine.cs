@@ -74,24 +74,27 @@ public class DownloadEngine : IDownloadEngine
             }
 
             var tasks = new List<Task>();
+            var filenames = new List<string>();
 
             if (mode.HasFlag(DownloadMode.Video))
             {
-                item.CurrentFileName = Path.GetFileName(videoDest);
+                filenames.Add(Path.GetFileName(videoDest));
                 tasks.Add(_mediaDownloader.DownloadAsync(item.Url, videoDest, noWatermark: true));
             }
 
             if (mode.HasFlag(DownloadMode.Audio))
             {
-                item.CurrentFileName = Path.GetFileName(audioDest);
+                filenames.Add(Path.GetFileName(audioDest));
                 tasks.Add(_mediaDownloader.DownloadAudioAsync(item.Url, audioDest));
             }
 
             if (mode.HasFlag(DownloadMode.OriginAudio) && !string.IsNullOrWhiteSpace(item.OriginalSoundUrl))
             {
-                item.CurrentFileName = Path.GetFileName(originDest);
+                filenames.Add(Path.GetFileName(originDest));
                 tasks.Add(_mediaDownloader.DownloadAudioAsync(item.OriginalSoundUrl, originDest));
             }
+
+            item.CurrentFileName = string.Join(", ", filenames);
 
             if (tasks.Count == 0)
                 throw new Exception("No download tasks selected");
@@ -105,7 +108,9 @@ public class DownloadEngine : IDownloadEngine
         }
         catch (Exception)
         {
-            if (mode.HasFlag(DownloadMode.Video))
+            if (mode.HasFlag(DownloadMode.Video) && mode.HasFlag(DownloadMode.OriginAudio) && !mode.HasFlag(DownloadMode.Audio))
+                item.Status = StatusCodes.VideoAudioOriginError;
+            else if (mode.HasFlag(DownloadMode.Video))
                 item.Status = StatusCodes.VideoError;
             else if (mode.HasFlag(DownloadMode.Audio))
                 item.Status = StatusCodes.AudioOnlyError;
