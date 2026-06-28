@@ -58,7 +58,8 @@ public class DownloadEngine : IDownloadEngine
             string videoDest = Path.Combine(item.SaveLocation, $"{item.VideoId}_video.mp4");
             string audioDest = Path.Combine(item.SaveLocation, $"{item.VideoId}_audio.mp3");
 
-            if (item.DownloadMode == DownloadMode.VideoAndAudioOrigin || item.DownloadMode == DownloadMode.AudioOriginOnly)
+            var modeFlag = (DownloadMode)item.DownloadMode;
+            if (modeFlag.HasFlag(DownloadMode.OriginAudio))
             {
                 var (soundName, soundUrl) = await _soundExtractor.GetOriginalSoundAsync(item.Url);
                 if (!string.IsNullOrWhiteSpace(soundUrl))
@@ -73,9 +74,9 @@ public class DownloadEngine : IDownloadEngine
             Task? videoTask = null;
             Task? audioTask = null;
 
-            switch (item.DownloadMode)
+            switch ((DownloadMode)item.DownloadMode)
             {
-                case DownloadMode.VideoAndAudioOrigin:
+                case DownloadMode.Video | DownloadMode.OriginAudio:
                     item.CurrentFileName = Path.GetFileName(videoDest);
                     videoTask = _mediaDownloader.DownloadAsync(item.Url, videoDest, noWatermark: true);
                     if (!string.IsNullOrWhiteSpace(item.OriginalSoundUrl))
@@ -98,7 +99,7 @@ public class DownloadEngine : IDownloadEngine
                         throw new Exception("Video download task missing");
                     break;
 
-                case DownloadMode.AudioOriginOnly:
+                case DownloadMode.OriginAudio:
                     if (!string.IsNullOrWhiteSpace(item.OriginalSoundUrl))
                     {
                         item.CurrentFileName = Path.GetFileName(audioDest);
@@ -112,7 +113,7 @@ public class DownloadEngine : IDownloadEngine
                         throw new Exception("No audio URL");
                     break;
 
-                case DownloadMode.AudioOnly:
+                case DownloadMode.Audio:
                     if (!string.IsNullOrWhiteSpace(item.Url))
                     {
                         item.CurrentFileName = Path.GetFileName(audioDest);
@@ -134,12 +135,12 @@ public class DownloadEngine : IDownloadEngine
         }
         catch (Exception)
         {
-            item.Status = item.DownloadMode switch
+            item.Status = ((DownloadMode)item.DownloadMode) switch
             {
-                DownloadMode.VideoAndAudioOrigin => StatusCodes.VideoAudioOriginError,
+                DownloadMode.Video | DownloadMode.OriginAudio => StatusCodes.VideoAudioOriginError,
                 DownloadMode.Video => StatusCodes.VideoError,
-                DownloadMode.AudioOriginOnly => StatusCodes.AudioOriginError,
-                DownloadMode.AudioOnly => StatusCodes.AudioOnlyError,
+                DownloadMode.OriginAudio => StatusCodes.AudioOriginError,
+                DownloadMode.Audio => StatusCodes.AudioOnlyError,
                 _ => StatusCodes.Error
             };
             _progressTimer?.Dispose();

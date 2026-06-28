@@ -1,9 +1,10 @@
 namespace DMFT.Core.Services;
 
-public static class DownloadMode
+[Flags]
+public enum DownloadMode
 {
-    public const int Video = 0;
-    public const int AudioOnly = 1;
-    public const int AudioOriginOnly = 2;
-    public const int VideoAndAudioOrigin = 3;
+    None = 0,
+    Video = 1,
+    Audio = 2,
+    OriginAudio = 4,
 }
