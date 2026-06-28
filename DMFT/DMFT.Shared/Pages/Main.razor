@@ -28,15 +28,20 @@
 }
 else
 {
-    <div class="mb-3 flex items-center gap-2">
-        <span class="text-sm font-bold whitespace-nowrap text-on-surface">Set All Mode:</span>
-        <select class="form-select form-select-sm px-2 py-1 rounded border border-outline-variant bg-surface text-on-surface text-sm"
-                @bind="_selectedModeForAll">
-            <option value="@((int)DownloadMode.Video)">Video</option>
-            <option value="@((int)DownloadMode.Audio)">Audio Only</option>
-            <option value="@((int)DownloadMode.OriginAudio)">Audio Origin</option>
-            <option value="@((int)(DownloadMode.Video | DownloadMode.OriginAudio))">Video + Audio Origin</option>
-        </select>
+    <div class="mb-3 flex items-center gap-3 flex-wrap">
+        <span class="text-sm font-bold whitespace-nowrap text-on-surface">Set All:</span>
+        <label class="flex items-center gap-1.5 text-sm cursor-pointer select-none">
+            <input type="checkbox" class="w-4 h-4 accent-primary" @bind="_setAllVideo" />
+            Video
+        </label>
+        <label class="flex items-center gap-1.5 text-sm cursor-pointer select-none">
+            <input type="checkbox" class="w-4 h-4 accent-primary" @bind="_setAllAudio" />
+            Audio
+        </label>
+        <label class="flex items-center gap-1.5 text-sm cursor-pointer select-none">
+            <input type="checkbox" class="w-4 h-4 accent-primary" @bind="_setAllOriginAudio" />
+            Origin Audio
+        </label>
         <button class="px-3 py-1 rounded text-xs bg-primary-container text-on-primary-container hover:brightness-110 border-0 cursor-pointer"
                 @onclick="ApplyModeToAll">Apply to All</button>
     </div>
@@ -54,15 +59,23 @@ else
                         <span class="text-xs px-2 py-0.5 rounded bg-error text-on-error">Missing</span>
                     }
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-3 flex-wrap">
                     <span class="text-xs text-on-surface-variant">Mode:</span>
-                    <select class="form-select form-select-sm px-2 py-0.5 rounded border border-outline-variant bg-surface text-on-surface text-xs"
-                            @bind="item.DownloadMode">
-                        <option value="@((int)DownloadMode.Video)">Video</option>
-                        <option value="@((int)DownloadMode.Audio)">Audio Only</option>
-                        <option value="@((int)DownloadMode.OriginAudio)">Audio Origin</option>
-                        <option value="@((int)(DownloadMode.Video | DownloadMode.OriginAudio))">Video + Audio Origin</option>
-                    </select>
+                    <label class="flex items-center gap-1 text-xs cursor-pointer select-none">
+                        <input type="checkbox" class="w-3.5 h-3.5 accent-primary" @bind="item.DownloadVideo" />
+                        Video
+                    </label>
+                    <label class="flex items-center gap-1 text-xs cursor-pointer select-none">
+                        <input type="checkbox" class="w-3.5 h-3.5 accent-primary" @bind="item.DownloadAudio" />
+                        Audio
+                    </label>
+                    @if (item.Platform != "YouTube")
+                    {
+                        <label class="flex items-center gap-1 text-xs cursor-pointer select-none">
+                            <input type="checkbox" class="w-3.5 h-3.5 accent-primary" @bind="item.DownloadOriginAudio" />
+                            Origin Audio
+                        </label>
+                    }
                 </div>
                 @if (item.ProgressPercent > 0 && item.ProgressPercent < 100)
                 {
@@ -93,7 +106,9 @@ else
     private AddModal? addModal;
     private LoadingModal? loadingModal;
     private Timer? _timer;
-    private int _selectedModeForAll = (int)DownloadMode.Video;
+    private bool _setAllVideo = true;
+    private bool _setAllAudio;
+    private bool _setAllOriginAudio;
 
     protected override async Task OnInitializedAsync()
     {
@@ -139,9 +154,13 @@ else
 
     private void ApplyModeToAll()
     {
+        int mode = 0;
+        if (_setAllVideo) mode |= (int)DownloadMode.Video;
+        if (_setAllAudio) mode |= (int)DownloadMode.Audio;
+        if (_setAllOriginAudio) mode |= (int)DownloadMode.OriginAudio;
         foreach (var item in _items)
         {
-            item.DownloadMode = _selectedModeForAll;
+            item.DownloadMode = mode;
         }
         Toast.Show($"Applied mode to all {_items.Count} item(s)", ToastLevel.Info);
     }
