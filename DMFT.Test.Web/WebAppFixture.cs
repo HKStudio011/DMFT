@@ -48,6 +48,7 @@ public class WebAppFixture : IAsyncLifetime
         builder.Services.AddSingleton<IDownloadEngine, DownloadEngine>();
         builder.Services.AddSingleton<ITikTokSoundExtractor, TikTokSoundExtractor>();
         builder.Services.AddSingleton<IDownloadQueue, DownloadQueue>();
+        builder.Services.AddSingleton<DownloadQueue>();
         builder.Services.AddSingleton<ToastService>();
         builder.Services.AddSingleton<IAppUpdateService>(sp =>
         {
@@ -125,5 +126,12 @@ public class WebAppFixture : IAsyncLifetime
         context.Database.EnsureCreated();
         context.RemoveRange(context.Set<DMFT.Core.Entities.DownloadItem>());
         await context.SaveChangesAsync();
+    }
+
+    public async Task SeedDownloadItemAsync(DMFT.Core.Entities.DownloadItem item)
+    {
+        if (_app is null) return;
+        var svc = _app.Services.GetRequiredService<DownloadService>();
+        await svc.AddDownloadAsync(item);
     }
 }
