@@ -1,4 +1,5 @@
 using DMFT.Core.Data;
+using DMFT.Core.Entities;
 using DMFT.Core.Services;
 using DMFT.Shared.Services;
 using DMFT.Web.Components;
@@ -133,5 +134,44 @@ public class WebAppFixture : IAsyncLifetime
         if (_app is null) return;
         var svc = _app.Services.GetRequiredService<DownloadService>();
         await svc.AddDownloadAsync(item);
+    }
+
+    public async Task SeedMainItemAsync(string url, string platform = "YouTube", int mode = 1, string videoId = "test123")
+    {
+        if (_app is null) return;
+        var svc = _app.Services.GetRequiredService<DownloadService>();
+        await svc.AddDownloadAsync(new DownloadItem
+        {
+            Id = Guid.NewGuid(),
+            Url = url,
+            Platform = platform,
+            VideoId = videoId,
+            Status = StatusCodes.New,
+            DownloadMode = mode,
+            Time = DateTime.UtcNow
+        });
+    }
+
+    public async Task SeedHistoryItemAsync(string url, string platform = "YouTube", int statusCode = 4)
+    {
+        if (_app is null) return;
+        var svc = _app.Services.GetRequiredService<DownloadService>();
+        await svc.AddDownloadAsync(new DownloadItem
+        {
+            Id = Guid.NewGuid(),
+            Url = url,
+            Platform = platform,
+            VideoId = Guid.NewGuid().ToString()[..8],
+            Status = statusCode,
+            DownloadMode = 1,
+            Time = DateTime.UtcNow.AddHours(-1)
+        });
+    }
+
+    public async Task SeedAppSettingAsync(string key, string value)
+    {
+        if (_app is null) return;
+        var svc = _app.Services.GetRequiredService<DownloadService>();
+        await svc.SetAppSettingAsync(key, value);
     }
 }
