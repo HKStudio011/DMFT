@@ -29,9 +29,11 @@ public class MainPageTests : IAsyncLifetime
 
     public async ValueTask DisposeAsync()
     {
-        await _page.CloseAsync();
-        await _browser.CloseAsync();
-        _playwright.Dispose();
+        if (_page is not null)
+            await _page.CloseAsync();
+        if (_browser is not null)
+            await _browser.CloseAsync();
+        _playwright?.Dispose();
     }
 
     [Fact]
@@ -76,7 +78,7 @@ public class MainPageTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task MainPage_ShowsModeCheckboxes()
+    public async Task MainPage_AfterAddingUrl_ShowsModeCheckboxes()
     {
         await _page.GotoAsync(_fixture.BaseUrl);
         await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -84,9 +86,8 @@ public class MainPageTests : IAsyncLifetime
         await _page.GetByRole(AriaRole.Button, new() { Name = "Add URLs" }).ClickAsync();
         await _page.GetByPlaceholder("Enter video URL").FillAsync("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
         await _page.GetByRole(AriaRole.Button, new() { Name = "Add", Exact = true }).ClickAsync();
-        await Task.Delay(500);
 
-        var videoCheckbox = _page.GetByRole(AriaRole.Checkbox, new() { Name = "Video" }).First;
+        var videoCheckbox = _page.GetByRole(AriaRole.Checkbox, new() { Name = "Video", Exact = true }).First;
         await Assertions.Expect(videoCheckbox).ToBeVisibleAsync();
     }
 }
