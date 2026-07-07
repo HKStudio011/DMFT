@@ -20,7 +20,7 @@ public interface IVideoLinkParser
 
 public class VideoLinkParser : IVideoLinkParser
 {
-    private static readonly Regex TikTokVideoIdRegex = new(@"video/(\d+)|videoId=(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    private static readonly Regex TikTokVideoIdRegex = new(@"(?:video|v)/(\d+)|videoId=(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     private static readonly Regex TikTokPhotoIdRegex = new(@"photo/(\d+)|videoId=(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     private static readonly Regex YouTubeWatchRegex = new(@"(?:youtube\.com/watch\?v=|youtu\.be/)([a-zA-Z0-9_-]{11})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     private static readonly Regex YouTubeShortRegex = new(@"youtube\.com/shorts/([a-zA-Z0-9_-]{11})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
