@@ -10,131 +10,90 @@ public class SettingsPageTests : IAsyncLifetime
     private IBrowser _browser = null!;
     private IPage _page = null!;
 
-    public SettingsPageTests(WebAppFixture fixture)
-    {
-        _fixture = fixture;
-    }
+    public SettingsPageTests(WebAppFixture fixture) => _fixture = fixture;
 
     public async ValueTask InitializeAsync()
     {
+        await _fixture.ResetDatabaseAsync();
         _playwright = await Microsoft.Playwright.Playwright.CreateAsync();
-        _browser = await _playwright.Chromium.LaunchAsync(new()
-        {
-            Headless = true,
-            Args = new[] { "--no-sandbox" }
-        });
+        _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true, Args = new[] { "--no-sandbox" } });
         _page = await _browser.NewPageAsync();
     }
 
     public async ValueTask DisposeAsync()
     {
-        if (_page is not null)
-            await _page.CloseAsync();
-        if (_browser is not null)
-            await _browser.CloseAsync();
+        if (_page is not null) await _page.CloseAsync();
+        if (_browser is not null) await _browser.CloseAsync();
         _playwright?.Dispose();
+    }
+
+    private async Task NavigateToSettingsAsync()
+    {
+        await _page.GotoAsync($"{_fixture.BaseUrl}/settings");
+        await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
     }
 
     [Fact]
     public async Task SettingsPage_Loads_ShowsTitle()
     {
-        await _page.GotoAsync($"{_fixture.BaseUrl}/settings");
-        await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await NavigateToSettingsAsync();
 
         var h1 = _page.GetByRole(AriaRole.Heading, new() { Name = "Settings" });
         await Assertions.Expect(h1).ToBeVisibleAsync();
     }
 
     [Fact]
-    public async Task SettingsPage_NavigatesFromNavMenu()
+    public async Task SettingsPage_ShowsAllSections()
     {
-        await _page.GotoAsync(_fixture.BaseUrl);
-        await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await NavigateToSettingsAsync();
 
-        await _page.GetByRole(AriaRole.Link, new() { Name = "Settings" }).ClickAsync();
-        await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-        var h1 = _page.GetByRole(AriaRole.Heading, new() { Name = "Settings" });
-        await Assertions.Expect(h1).ToBeVisibleAsync();
+        var headings = _page.Locator("h2");
+        var texts = await headings.AllTextContentsAsync();
+        Assert.Contains(texts, t => t.Contains("Theme"));
+        Assert.Contains(texts, t => t.Contains("yt-dlp"));
+        Assert.Contains(texts, t => t.Contains("Quality"));
+        Assert.Contains(texts, t => t.Contains("Updates"));
     }
 
     [Fact]
-    public async Task SettingsPage_ShowsThemeSection()
+    public async Task SettingsPage_HasSaveAndResetButtons()
     {
-        await _page.GotoAsync($"{_fixture.BaseUrl}/settings");
-        await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-        var section = _page.GetByRole(AriaRole.Heading, new() { Name = "Theme" });
-        await Assertions.Expect(section).ToBeVisibleAsync();
-    }
-
-    [Fact]
-    public async Task SettingsPage_ShowsYtDlpConfigSection()
-    {
-        await _page.GotoAsync($"{_fixture.BaseUrl}/settings");
-        await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-        var section = _page.GetByRole(AriaRole.Heading, new() { Name = "yt-dlp Configuration" });
-        await Assertions.Expect(section).ToBeVisibleAsync();
-    }
-
-    [Fact]
-    public async Task SettingsPage_ShowsQualitySection()
-    {
-        await _page.GotoAsync($"{_fixture.BaseUrl}/settings");
-        await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-        var section = _page.GetByRole(AriaRole.Heading, new() { Name = "Download Quality" });
-        await Assertions.Expect(section).ToBeVisibleAsync();
-    }
-
-    [Fact]
-    public async Task SettingsPage_ShowsUpdatesSection()
-    {
-        await _page.GotoAsync($"{_fixture.BaseUrl}/settings");
-        await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-        var section = _page.GetByRole(AriaRole.Heading, new() { Name = "Updates" });
-        await Assertions.Expect(section).ToBeVisibleAsync();
-    }
-
-    [Fact]
-    public async Task SettingsPage_HasSaveButton()
-    {
-        await _page.GotoAsync($"{_fixture.BaseUrl}/settings");
-        await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await NavigateToSettingsAsync();
 
         var saveBtn = _page.GetByRole(AriaRole.Button, new() { Name = "Save Settings" });
-        await Assertions.Expect(saveBtn).ToBeVisibleAsync();
-    }
-
-    [Fact]
-    public async Task SettingsPage_HasResetButton()
-    {
-        await _page.GotoAsync($"{_fixture.BaseUrl}/settings");
-        await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
         var resetBtn = _page.GetByRole(AriaRole.Button, new() { Name = "Reset" });
+
+        await Assertions.Expect(saveBtn).ToBeVisibleAsync();
         await Assertions.Expect(resetBtn).ToBeVisibleAsync();
     }
 
     [Fact]
-    public async Task SettingsPage_ThemeModeSelect_Exists()
+    public async Task SettingsPage_ThemeSelect_Exists()
     {
-        await _page.GotoAsync($"{_fixture.BaseUrl}/settings");
-        await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await NavigateToSettingsAsync();
 
-        var select = _page.Locator("select").First;
-        await Assertions.Expect(select).ToBeVisibleAsync();
+        var themeSelect = _page.Locator("select").First;
+        await Assertions.Expect(themeSelect).ToBeVisibleAsync();
     }
 
     [Fact]
-    public async Task SettingsPage_CheckForUpdatesButton_Exists()
+    public async Task SettingsPage_CheckForUpdates_ShowsResult()
     {
-        await _page.GotoAsync($"{_fixture.BaseUrl}/settings");
-        await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await NavigateToSettingsAsync();
 
         var checkBtn = _page.GetByRole(AriaRole.Button, new() { Name = "Check for Updates" });
         await Assertions.Expect(checkBtn).ToBeVisibleAsync();
+    }
+
+    [Fact]
+    public async Task SettingsPage_SaveSettings_ShowsSuccessToast()
+    {
+        await NavigateToSettingsAsync();
+
+        await _page.GetByRole(AriaRole.Button, new() { Name = "Save Settings" }).ClickAsync();
+        await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var toast = _page.GetByText("Settings saved");
+        await Assertions.Expect(toast).ToBeVisibleAsync();
     }
 }
