@@ -1,5 +1,3 @@
-#pragma warning disable CS8604 // Testing null input — production handles via IsNullOrWhiteSpace
-
 using DMFT.Core.Services;
 
 namespace DMFT.Test.Core.Services;
@@ -31,7 +29,9 @@ public class VideoLinkParserTests
     [InlineData("not-a-url")]
     public void IsSupportedUrl_InvalidUrls_ReturnsFalse(string? url)
     {
+#pragma warning disable CS8604 // string? parameter passed to non-nullable interface parameter (null is valid test input)
         var result = Parser.IsSupportedUrl(url);
+#pragma warning restore CS8604
 
         Assert.False(result);
     }
@@ -74,7 +74,9 @@ public class VideoLinkParserTests
     [InlineData(null)]
     public void GetPlatform_UnknownUrl_ReturnsUnknown(string? url)
     {
+#pragma warning disable CS8604 // string? parameter passed to non-nullable interface parameter (null is valid test input)
         var result = Parser.GetPlatform(url);
+#pragma warning restore CS8604
 
         Assert.Equal(VideoPlatform.Unknown, result);
     }
@@ -174,7 +176,9 @@ public class VideoLinkParserTests
     [Fact]
     public void TryParseVideoId_NullUrl_ReturnsFalse()
     {
+#pragma warning disable CS8604 // Null passed intentionally to test null-handling
         var result = Parser.TryParseVideoId(null!, out var videoId);
+#pragma warning restore CS8604
 
         Assert.False(result);
         Assert.Null(videoId);
@@ -199,4 +203,3 @@ public class VideoLinkParserTests
         Assert.Equal("1234567890", videoId);
     }
 }
-#pragma warning restore CS8604
