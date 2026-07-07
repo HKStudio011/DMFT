@@ -11,10 +11,10 @@ public class AppSettingsReaderTests
     [Fact]
     public async Task ReadYtDlpConfigAsync_SettingsExist_ReturnsValues()
     {
-        using var context = CreateDbContextWithSettings();
-        var dbFactory = CreateDbFactory(context);
+        var dbFactory = CreateDbFactoryWithSettings();
 
-        var (extraArgs, outputTemplate, formatString) = await AppSettingsReader.ReadYtDlpConfigAsync(dbFactory.Object);
+        var (extraArgs, outputTemplate, formatString) =
+            await AppSettingsReader.ReadYtDlpConfigAsync(dbFactory.Object);
 
         Assert.Equal("--no-warnings", extraArgs);
         Assert.Equal("%(title)s.%(ext)s", outputTemplate);
@@ -24,10 +24,10 @@ public class AppSettingsReaderTests
     [Fact]
     public async Task ReadYtDlpConfigAsync_NoSettings_ReturnsNulls()
     {
-        using var context = CreateEmptyDbContext();
-        var dbFactory = CreateDbFactory(context);
+        var dbFactory = CreateEmptyDbFactory();
 
-        var (extraArgs, outputTemplate, formatString) = await AppSettingsReader.ReadYtDlpConfigAsync(dbFactory.Object);
+        var (extraArgs, outputTemplate, formatString) =
+            await AppSettingsReader.ReadYtDlpConfigAsync(dbFactory.Object);
 
         Assert.Null(extraArgs);
         Assert.Null(outputTemplate);
@@ -37,10 +37,10 @@ public class AppSettingsReaderTests
     [Fact]
     public async Task ReadQueueSettingsAsync_SettingsExist_ReturnsValues()
     {
-        using var context = CreateDbContextWithSettings();
-        var dbFactory = CreateDbFactory(context);
+        var dbFactory = CreateDbFactoryWithSettings();
 
-        var (maxConcurrent, delayBetweenMs) = await AppSettingsReader.ReadQueueSettingsAsync(dbFactory.Object);
+        var (maxConcurrent, delayBetweenMs) =
+            await AppSettingsReader.ReadQueueSettingsAsync(dbFactory.Object);
 
         Assert.Equal(3, maxConcurrent);
         Assert.Equal(5000, delayBetweenMs);
@@ -49,13 +49,25 @@ public class AppSettingsReaderTests
     [Fact]
     public async Task ReadQueueSettingsAsync_NoSettings_ReturnsNulls()
     {
-        using var context = CreateEmptyDbContext();
-        var dbFactory = CreateDbFactory(context);
+        var dbFactory = CreateEmptyDbFactory();
 
-        var (maxConcurrent, delayBetweenMs) = await AppSettingsReader.ReadQueueSettingsAsync(dbFactory.Object);
+        var (maxConcurrent, delayBetweenMs) =
+            await AppSettingsReader.ReadQueueSettingsAsync(dbFactory.Object);
 
         Assert.Null(maxConcurrent);
         Assert.Null(delayBetweenMs);
+    }
+
+    private static Mock<IDbContextFactory<AppDbContext>> CreateDbFactoryWithSettings()
+    {
+        var context = CreateDbContextWithSettings();
+        return CreateDbFactory(context);
+    }
+
+    private static Mock<IDbContextFactory<AppDbContext>> CreateEmptyDbFactory()
+    {
+        var context = CreateEmptyDbContext();
+        return CreateDbFactory(context);
     }
 
     private static AppDbContext CreateEmptyDbContext()

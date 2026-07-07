@@ -1,10 +1,12 @@
+#pragma warning disable CS8604 // Testing null input — production handles via IsNullOrWhiteSpace
+
 using DMFT.Core.Services;
 
 namespace DMFT.Test.Core.Services;
 
 public class VideoLinkParserTests
 {
-    private readonly IVideoLinkParser _parser = new VideoLinkParser();
+    private static readonly IVideoLinkParser Parser = new VideoLinkParser();
 
     [Theory]
     [InlineData("https://www.tiktok.com/@user/video/1234567890")]
@@ -15,7 +17,7 @@ public class VideoLinkParserTests
     [InlineData("https://m.tiktok.com/v/1234567890")]
     public void IsSupportedUrl_ValidUrls_ReturnsTrue(string url)
     {
-        var result = _parser.IsSupportedUrl(url);
+        var result = Parser.IsSupportedUrl(url);
 
         Assert.True(result);
     }
@@ -27,9 +29,9 @@ public class VideoLinkParserTests
     [InlineData("https://www.facebook.com/watch")]
     [InlineData("https://vimeo.com/12345")]
     [InlineData("not-a-url")]
-    public void IsSupportedUrl_InvalidUrls_ReturnsFalse(string url)
+    public void IsSupportedUrl_InvalidUrls_ReturnsFalse(string? url)
     {
-        var result = _parser.IsSupportedUrl(url);
+        var result = Parser.IsSupportedUrl(url);
 
         Assert.False(result);
     }
@@ -37,7 +39,7 @@ public class VideoLinkParserTests
     [Fact]
     public void GetPlatform_TikTokUrl_ReturnsTikTok()
     {
-        var result = _parser.GetPlatform("https://www.tiktok.com/@user/video/123");
+        var result = Parser.GetPlatform("https://www.tiktok.com/@user/video/123");
 
         Assert.Equal(VideoPlatform.TikTok, result);
     }
@@ -45,7 +47,7 @@ public class VideoLinkParserTests
     [Fact]
     public void GetPlatform_YouTubeWatchUrl_ReturnsYouTube()
     {
-        var result = _parser.GetPlatform("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+        var result = Parser.GetPlatform("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
         Assert.Equal(VideoPlatform.YouTube, result);
     }
@@ -53,7 +55,7 @@ public class VideoLinkParserTests
     [Fact]
     public void GetPlatform_YouTubeShortsUrl_ReturnsYouTubeShorts()
     {
-        var result = _parser.GetPlatform("https://www.youtube.com/shorts/abc123defgh");
+        var result = Parser.GetPlatform("https://www.youtube.com/shorts/abc123defgh");
 
         Assert.Equal(VideoPlatform.YouTubeShorts, result);
     }
@@ -61,7 +63,7 @@ public class VideoLinkParserTests
     [Fact]
     public void GetPlatform_YouTuBeUrl_ReturnsYouTubeShorts()
     {
-        var result = _parser.GetPlatform("https://youtu.be/dQw4w9WgXcQ");
+        var result = Parser.GetPlatform("https://youtu.be/dQw4w9WgXcQ");
 
         Assert.Equal(VideoPlatform.YouTubeShorts, result);
     }
@@ -70,9 +72,9 @@ public class VideoLinkParserTests
     [InlineData("")]
     [InlineData("https://facebook.com")]
     [InlineData(null)]
-    public void GetPlatform_UnknownUrl_ReturnsUnknown(string url)
+    public void GetPlatform_UnknownUrl_ReturnsUnknown(string? url)
     {
-        var result = _parser.GetPlatform(url);
+        var result = Parser.GetPlatform(url);
 
         Assert.Equal(VideoPlatform.Unknown, result);
     }
@@ -80,7 +82,7 @@ public class VideoLinkParserTests
     [Fact]
     public void GetPlatformLabel_TikTok_ReturnsTikTok()
     {
-        var result = _parser.GetPlatformLabel(VideoPlatform.TikTok);
+        var result = Parser.GetPlatformLabel(VideoPlatform.TikTok);
 
         Assert.Equal("TikTok", result);
     }
@@ -88,7 +90,7 @@ public class VideoLinkParserTests
     [Fact]
     public void GetPlatformLabel_YouTube_ReturnsYouTube()
     {
-        var result = _parser.GetPlatformLabel(VideoPlatform.YouTube);
+        var result = Parser.GetPlatformLabel(VideoPlatform.YouTube);
 
         Assert.Equal("YouTube", result);
     }
@@ -96,7 +98,7 @@ public class VideoLinkParserTests
     [Fact]
     public void GetPlatformLabel_YouTubeShorts_ReturnsYouTubeShorts()
     {
-        var result = _parser.GetPlatformLabel(VideoPlatform.YouTubeShorts);
+        var result = Parser.GetPlatformLabel(VideoPlatform.YouTubeShorts);
 
         Assert.Equal("YouTube Shorts", result);
     }
@@ -104,7 +106,7 @@ public class VideoLinkParserTests
     [Fact]
     public void GetPlatformLabel_Unknown_ReturnsUnknown()
     {
-        var result = _parser.GetPlatformLabel(VideoPlatform.Unknown);
+        var result = Parser.GetPlatformLabel(VideoPlatform.Unknown);
 
         Assert.Equal("Unknown", result);
     }
@@ -112,7 +114,8 @@ public class VideoLinkParserTests
     [Fact]
     public void TryParseVideoId_TikTokVideoUrl_ExtractsVideoId()
     {
-        var result = _parser.TryParseVideoId("https://www.tiktok.com/@user/video/1234567890", out var videoId);
+        var result = Parser.TryParseVideoId(
+            "https://www.tiktok.com/@user/video/1234567890", out var videoId);
 
         Assert.True(result);
         Assert.Equal("1234567890", videoId);
@@ -121,7 +124,8 @@ public class VideoLinkParserTests
     [Fact]
     public void TryParseVideoId_YouTubeWatchUrl_ExtractsVideoId()
     {
-        var result = _parser.TryParseVideoId("https://www.youtube.com/watch?v=dQw4w9WgXcQ", out var videoId);
+        var result = Parser.TryParseVideoId(
+            "https://www.youtube.com/watch?v=dQw4w9WgXcQ", out var videoId);
 
         Assert.True(result);
         Assert.Equal("dQw4w9WgXcQ", videoId);
@@ -130,7 +134,8 @@ public class VideoLinkParserTests
     [Fact]
     public void TryParseVideoId_YouTubeShortsUrl_ExtractsVideoId()
     {
-        var result = _parser.TryParseVideoId("https://www.youtube.com/shorts/abc123defgh", out var videoId);
+        var result = Parser.TryParseVideoId(
+            "https://www.youtube.com/shorts/abc123defgh", out var videoId);
 
         Assert.True(result);
         Assert.Equal("abc123defgh", videoId);
@@ -139,7 +144,8 @@ public class VideoLinkParserTests
     [Fact]
     public void TryParseVideoId_YouTuBeUrl_ExtractsVideoId()
     {
-        var result = _parser.TryParseVideoId("https://youtu.be/dQw4w9WgXcQ", out var videoId);
+        var result = Parser.TryParseVideoId(
+            "https://youtu.be/dQw4w9WgXcQ", out var videoId);
 
         Assert.True(result);
         Assert.Equal("dQw4w9WgXcQ", videoId);
@@ -148,7 +154,8 @@ public class VideoLinkParserTests
     [Fact]
     public void TryParseVideoId_TikTokPhotoUrl_ExtractsPhotoId()
     {
-        var result = _parser.TryParseVideoId("https://www.tiktok.com/@user/photo/9876543210", out var videoId);
+        var result = Parser.TryParseVideoId(
+            "https://www.tiktok.com/@user/photo/9876543210", out var videoId);
 
         Assert.True(result);
         Assert.Equal("9876543210", videoId);
@@ -157,7 +164,8 @@ public class VideoLinkParserTests
     [Fact]
     public void TryParseVideoId_UnsupportedUrl_ReturnsFalse()
     {
-        var result = _parser.TryParseVideoId("https://facebook.com/watch", out var videoId);
+        var result = Parser.TryParseVideoId(
+            "https://facebook.com/watch", out var videoId);
 
         Assert.False(result);
         Assert.Null(videoId);
@@ -166,7 +174,7 @@ public class VideoLinkParserTests
     [Fact]
     public void TryParseVideoId_NullUrl_ReturnsFalse()
     {
-        var result = _parser.TryParseVideoId(null!, out var videoId);
+        var result = Parser.TryParseVideoId(null!, out var videoId);
 
         Assert.False(result);
         Assert.Null(videoId);
@@ -175,7 +183,7 @@ public class VideoLinkParserTests
     [Fact]
     public void TryParseVideoId_EmptyUrl_ReturnsFalse()
     {
-        var result = _parser.TryParseVideoId("", out var videoId);
+        var result = Parser.TryParseVideoId("", out var videoId);
 
         Assert.False(result);
         Assert.Null(videoId);
@@ -184,9 +192,11 @@ public class VideoLinkParserTests
     [Fact]
     public void TryParseVideoId_TikTokMobileUrl_ExtractsVideoId()
     {
-        var result = _parser.TryParseVideoId("https://m.tiktok.com/v/1234567890", out var videoId);
+        var result = Parser.TryParseVideoId(
+            "https://m.tiktok.com/v/1234567890", out var videoId);
 
         Assert.True(result);
         Assert.Equal("1234567890", videoId);
     }
 }
+#pragma warning restore CS8604

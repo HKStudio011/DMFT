@@ -10,22 +10,26 @@ public class DownloadItemTests
     {
         var item = new DownloadItem();
 
-        Assert.False(item.DownloadVideo);
+        var result = item.DownloadVideo;
+
+        Assert.False(result);
     }
 
     [Fact]
     public void DownloadVideo_SetTrue_SetsDownloadModeBit()
     {
         var item = new DownloadItem();
-
         item.DownloadVideo = true;
 
-        Assert.True(item.DownloadVideo);
-        Assert.Equal((int)DownloadMode.Video, item.DownloadMode & (int)DownloadMode.Video);
+        var result = item.DownloadVideo;
+        var mode = item.DownloadMode & (int)DownloadMode.Video;
+
+        Assert.True(result);
+        Assert.Equal((int)DownloadMode.Video, mode);
     }
 
     [Fact]
-    public void DownloadVideo_SetFalseThenTrue_TogglesCorrectly()
+    public void DownloadVideo_ClearAfterSet_ClearsBit()
     {
         var item = new DownloadItem();
         item.DownloadVideo = true;
@@ -41,18 +45,22 @@ public class DownloadItemTests
     {
         var item = new DownloadItem();
 
-        Assert.False(item.DownloadAudio);
+        var result = item.DownloadAudio;
+
+        Assert.False(result);
     }
 
     [Fact]
     public void DownloadAudio_SetTrue_SetsDownloadModeBit()
     {
         var item = new DownloadItem();
-
         item.DownloadAudio = true;
 
-        Assert.True(item.DownloadAudio);
-        Assert.Equal((int)DownloadMode.Audio, item.DownloadMode & (int)DownloadMode.Audio);
+        var result = item.DownloadAudio;
+        var mode = item.DownloadMode & (int)DownloadMode.Audio;
+
+        Assert.True(result);
+        Assert.Equal((int)DownloadMode.Audio, mode);
     }
 
     [Fact]
@@ -60,41 +68,49 @@ public class DownloadItemTests
     {
         var item = new DownloadItem();
 
-        Assert.False(item.DownloadOriginAudio);
+        var result = item.DownloadOriginAudio;
+
+        Assert.False(result);
     }
 
     [Fact]
     public void DownloadOriginAudio_SetTrue_SetsDownloadModeBit()
     {
         var item = new DownloadItem();
-
         item.DownloadOriginAudio = true;
 
-        Assert.True(item.DownloadOriginAudio);
-        Assert.Equal((int)DownloadMode.OriginAudio, item.DownloadMode & (int)DownloadMode.OriginAudio);
+        var result = item.DownloadOriginAudio;
+        var mode = item.DownloadMode & (int)DownloadMode.OriginAudio;
+
+        Assert.True(result);
+        Assert.Equal((int)DownloadMode.OriginAudio, mode);
     }
 
     [Fact]
     public void MultipleFlags_SetAll_StoresCombination()
     {
         var item = new DownloadItem();
-
         item.DownloadVideo = true;
         item.DownloadAudio = true;
         item.DownloadOriginAudio = true;
+
+        var result = item.DownloadMode;
 
         Assert.True(item.DownloadVideo);
         Assert.True(item.DownloadAudio);
         Assert.True(item.DownloadOriginAudio);
         Assert.Equal(
             (int)(DownloadMode.Video | DownloadMode.Audio | DownloadMode.OriginAudio),
-            item.DownloadMode);
+            result);
     }
 
     [Fact]
     public void MultipleFlags_ClearOne_OthersRemain()
     {
-        var item = new DownloadItem { DownloadMode = (int)(DownloadMode.Video | DownloadMode.Audio | DownloadMode.OriginAudio) };
+        var item = new DownloadItem
+        {
+            DownloadMode = (int)(DownloadMode.Video | DownloadMode.Audio | DownloadMode.OriginAudio)
+        };
 
         item.DownloadAudio = false;
 
@@ -118,15 +134,20 @@ public class DownloadItemTests
     {
         var item = new DownloadItem();
 
-        Assert.NotEqual(Guid.Empty, item.Id);
+        var id = item.Id;
+
+        Assert.NotEqual(Guid.Empty, id);
     }
 
     [Fact]
     public void Time_NewInstance_IsRecentUtc()
     {
         var item = new DownloadItem();
+        var before = DateTime.UtcNow.AddMinutes(-1);
 
-        Assert.True(item.Time <= DateTime.UtcNow);
-        Assert.True(item.Time > DateTime.UtcNow.AddMinutes(-1));
+        var time = item.Time;
+
+        Assert.True(time <= DateTime.UtcNow);
+        Assert.True(time > before);
     }
 }
