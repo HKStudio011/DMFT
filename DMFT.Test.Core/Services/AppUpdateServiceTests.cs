@@ -105,4 +105,41 @@ public class AppUpdateServiceTests
 
         Assert.Null(result);
     }
+
+    [Fact]
+    public async Task DownloadReleaseAsync_FindsWinZipAsset_ReturnsPath()
+    {
+        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+        handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent([0x50, 0x4B, 0x05, 0x06]) // empty zip marker
+            });
+        var http = new HttpClient(handlerMock.Object);
+        var service = new AppUpdateService(http);
+        var destDir = Path.Combine(Path.GetTempPath(), $"DMFT_Test_{Guid.NewGuid()}");
+        var release = new ReleaseInfo("v1.0.0", "", null,
+        [
+            new ReleaseAsset("DMFT-win-x64.zip", "https://example.com/dmft.zip"),
+            new ReleaseAsset("DMFT-linux.tar.gz", "https://example.com/dmft.tar.gz")
+        ]);
+
+        try
+        {
+            var result = await service.DownloadReleaseAsync(release, destDir);
+
+            Assert.NotNull(result);
+            Assert.EndsWith("DMFT-win-x64.zip", result);
+            Assert.True(File.Exists(result));
+        }
+        finally
+        {
+            if (Directory.Exists(destDir))
+                Directory.Delete(destDir, recursive: true);
+        }
+    }
 }
