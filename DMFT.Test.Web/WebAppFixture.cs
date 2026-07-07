@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 
 namespace DMFT.Test.Web;
 
@@ -18,7 +19,14 @@ public class WebAppFixture : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        var builder = WebApplication.CreateBuilder();
+        var webProjectPath = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..", "DMFT", "DMFT.Web"));
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+        {
+            ContentRootPath = webProjectPath,
+            ApplicationName = "DMFT.Web",
+            EnvironmentName = "Development"
+        });
 
         builder.Services.AddRazorComponents()
             .AddInteractiveServerComponents()
@@ -84,7 +92,6 @@ public class WebAppFixture : IAsyncLifetime
             app.UseHsts();
         }
         app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-        app.UseHttpsRedirection();
         app.UseAntiforgery();
         app.MapStaticAssets();
         app.MapRazorComponents<App>()
@@ -107,5 +114,16 @@ public class WebAppFixture : IAsyncLifetime
             await _app.StopAsync();
             await _app.DisposeAsync();
         }
+    }
+
+    public async Task ResetDatabaseAsync()
+    {
+        if (_app is null) return;
+        using var scope = _app.Services.CreateScope();
+        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+        using var context = await factory.CreateDbContextAsync();
+        context.Database.EnsureCreated();
+        context.RemoveRange(context.Set<DMFT.Core.Entities.DownloadItem>());
+        await context.SaveChangesAsync();
     }
 }
