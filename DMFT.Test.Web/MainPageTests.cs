@@ -57,6 +57,7 @@ public class MainPageTests : IAsyncLifetime
     public async Task MainPage_AddUrl_AppearsInBodyText()
     {
         await _page.GotoAsync(_fixture.BaseUrl);
+        await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         var badge = _page.GetByText("YouTube", new() { Exact = true });
         await Assertions.Expect(badge).Not.ToBeVisibleAsync();
 
@@ -118,8 +119,14 @@ public class MainPageTests : IAsyncLifetime
         await _page.GotoAsync(_fixture.BaseUrl);
         await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var setAllVideo = _page.GetByRole(AriaRole.Checkbox, new() { Name = "Video" }).First;
-        await Assertions.Expect(setAllVideo).ToBeVisibleAsync();
+        var checkbox = _page.GetByRole(AriaRole.Checkbox, new() { Name = "Video" }).First;
+        await Assertions.Expect(checkbox).ToBeVisibleAsync();
+
+        // Click the checkbox and verify state changes
+        var isChecked = await checkbox.IsCheckedAsync();
+        await checkbox.ClickAsync();
+        await Task.Delay(200);
+        Assert.NotEqual(isChecked, await checkbox.IsCheckedAsync());
 
         var applyBtn = _page.GetByRole(AriaRole.Button, new() { Name = "Apply to All" });
         await Assertions.Expect(applyBtn).ToBeVisibleAsync();
