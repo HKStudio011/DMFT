@@ -13,7 +13,7 @@ public class AppLaunchTests
     public async Task App_Launches_MainWindowAppears()
     {
         using var driver = CreateDriver();
-        await Task.Delay(3000);
+        await Task.Delay(3000, TestContext.Current.CancellationToken);
 
         var handles = driver.WindowHandles;
         Assert.NotEmpty(handles);
@@ -23,7 +23,7 @@ public class AppLaunchTests
     public async Task App_MainPage_ShowsEmptyState()
     {
         using var driver = CreateDriver();
-        await Task.Delay(3000);
+        await Task.Delay(3000, TestContext.Current.CancellationToken);
 
         try
         {
@@ -40,13 +40,13 @@ public class AppLaunchTests
     public async Task App_NavigatesToSettings()
     {
         using var driver = CreateDriver();
-        await Task.Delay(3000);
+        await Task.Delay(3000, TestContext.Current.CancellationToken);
 
         try
         {
             var settingsLink = driver.FindElement(MobileBy.AccessibilityId("Settings"));
             settingsLink.Click();
-            await Task.Delay(1000);
+            await Task.Delay(1000, TestContext.Current.CancellationToken);
         }
         catch (OpenQA.Selenium.NoSuchElementException)
         {
@@ -58,7 +58,7 @@ public class AppLaunchTests
     public async Task App_Close_ExitsCleanly()
     {
         var driver = CreateDriver();
-        await Task.Delay(1000);
+        await Task.Delay(1000, TestContext.Current.CancellationToken);
 
         driver.Quit();
 
