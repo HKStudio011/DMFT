@@ -6,6 +6,11 @@
     <Nullable>enable</Nullable>
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
     <StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
+    <!-- WASM0001: SQLitePCLRaw.lib.e_sqlite3 carries P/Invokes (sqlite3_config/sqlite3_db_config
+         varargs) unsupported on WASM. This Blazor WASM client never executes SQLite — the
+         dependency is transitive via DMFT.Shared -> DMFT.Core (EF Core Sqlite). Suppressed
+         intentionally; the proper fix is to split DMFT.Core so the WASM closure excludes SQLite. -->
+    <NoWarn>WASM0001</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
