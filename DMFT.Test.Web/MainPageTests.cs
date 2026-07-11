@@ -92,7 +92,7 @@ public class MainPageTests : IAsyncLifetime
         await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         await _page.GetByRole(AriaRole.Button, new() { Name = "Download" }).First.ClickAsync();
-        await Task.Delay(500);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
 
         var pageText = await _page.TextContentAsync("body");
         Assert.Contains("Download", pageText, StringComparison.OrdinalIgnoreCase);
@@ -125,7 +125,7 @@ public class MainPageTests : IAsyncLifetime
         // Click the checkbox and verify state changes
         var isChecked = await checkbox.IsCheckedAsync();
         await checkbox.ClickAsync();
-        await Task.Delay(200);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
         Assert.NotEqual(isChecked, await checkbox.IsCheckedAsync());
 
         var applyBtn = _page.GetByRole(AriaRole.Button, new() { Name = "Apply to All" });
