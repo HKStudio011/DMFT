@@ -10,28 +10,20 @@ public class NavigationTests : IAsyncLifetime
     private IBrowser _browser = null!;
     private IPage _page = null!;
 
-    public NavigationTests(WebAppFixture fixture)
-    {
-        _fixture = fixture;
-    }
+    public NavigationTests(WebAppFixture fixture) => _fixture = fixture;
 
     public async ValueTask InitializeAsync()
     {
+        await _fixture.ResetDatabaseAsync();
         _playwright = await Microsoft.Playwright.Playwright.CreateAsync();
-        _browser = await _playwright.Chromium.LaunchAsync(new()
-        {
-            Headless = true,
-            Args = new[] { "--no-sandbox" }
-        });
+        _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true, Args = new[] { "--no-sandbox" } });
         _page = await _browser.NewPageAsync();
     }
 
     public async ValueTask DisposeAsync()
     {
-        if (_page is not null)
-            await _page.CloseAsync();
-        if (_browser is not null)
-            await _browser.CloseAsync();
+        if (_page is not null) await _page.CloseAsync();
+        if (_browser is not null) await _browser.CloseAsync();
         _playwright?.Dispose();
     }
 
@@ -47,26 +39,30 @@ public class NavigationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Navigation_MainLink_NavigatesToHome()
+    public async Task Navigation_ClickHistory_ShowsHistoryPage()
     {
-        await _page.GotoAsync($"{_fixture.BaseUrl}/history");
+        await _page.GotoAsync(_fixture.BaseUrl);
         await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        await _page.GetByRole(AriaRole.Link, new() { Name = "Main" }).ClickAsync();
+        await _page.GetByRole(AriaRole.Link, new() { Name = "History" }).ClickAsync();
         await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var heading = _page.GetByRole(AriaRole.Heading, new() { Name = "Downloads" });
+        var heading = _page.GetByRole(AriaRole.Heading, new() { Name = "Download History" });
         await Assertions.Expect(heading).ToBeVisibleAsync();
+        Assert.Contains("/history", _page.Url);
     }
 
     [Fact]
-    public async Task Navigation_NotFoundPage_ShowsNotFound()
+    public async Task Navigation_ClickSettings_ShowsSettingsPage()
     {
-        await _page.GotoAsync($"{_fixture.BaseUrl}/nonexistent-page");
+        await _page.GotoAsync(_fixture.BaseUrl);
         await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var body = _page.Locator("body");
-        var text = await body.InnerTextAsync();
-        Assert.Contains("Not Found", text, StringComparison.OrdinalIgnoreCase);
+        await _page.GetByRole(AriaRole.Link, new() { Name = "Settings" }).ClickAsync();
+        await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var heading = _page.GetByRole(AriaRole.Heading, new() { Name = "Settings" });
+        await Assertions.Expect(heading).ToBeVisibleAsync();
+        Assert.Contains("/settings", _page.Url);
     }
 }

@@ -77,7 +77,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DMFT.Shared\DMFT.Shared.csproj" />
+    <ProjectReference Include="..\DMFT.Shared\DMFT.Shared.csproj"/>
   </ItemGroup>
 
 </Project>

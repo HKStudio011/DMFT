@@ -1,12 +1,21 @@
 ﻿@using System.Net.Http
 @using System.Net.Http.Json
+@using DMFT
+@using DMFT.Core.Data
+@using DMFT.Core.Entities
+@using DMFT.Core.Services
+@using DMFT.Shared
+@using DMFT.Shared.Components
+@using DMFT.Shared.Layout
+@using DMFT.Shared.Services
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.AspNetCore.Components.Web
-@using static Microsoft.AspNetCore.Components.Web.RenderMode
 @using Microsoft.AspNetCore.Components.Web.Virtualization
 @using Microsoft.JSInterop
-@using DMFT
-@using DMFT.Shared
-@using DMFT.Shared.Layout
-@using DMFT.Shared.Services
+@using Microsoft.EntityFrameworkCore
+
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject IJSRuntime JS
+@inject ToastService Toast
+

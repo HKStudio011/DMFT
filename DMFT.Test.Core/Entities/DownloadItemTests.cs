@@ -150,4 +150,94 @@ public class DownloadItemTests
         Assert.True(time <= DateTime.UtcNow);
         Assert.True(time > before);
     }
+
+    [Fact]
+    public void Url_Default_IsEmpty()
+    {
+        var item = new DownloadItem();
+
+        Assert.Equal(string.Empty, item.Url);
+    }
+
+    [Fact]
+    public void Platform_Default_ReturnsUnknown()
+    {
+        var item = new DownloadItem();
+
+        Assert.Equal("Unknown", item.Platform);
+    }
+
+    [Fact]
+    public void Status_Default_IsZero()
+    {
+        var item = new DownloadItem();
+
+        Assert.Equal(0, item.Status);
+    }
+
+    [Fact]
+    public void VideoId_Default_IsEmpty()
+    {
+        var item = new DownloadItem();
+
+        Assert.Equal(string.Empty, item.VideoId);
+    }
+
+    [Fact]
+    public void ProgressPercent_Default_IsZero()
+    {
+        var item = new DownloadItem();
+
+        Assert.Equal(0, item.ProgressPercent);
+    }
+
+    [Fact]
+    public void Speed_Default_IsZero()
+    {
+        var item = new DownloadItem();
+
+        Assert.Equal(0.0, item.Speed);
+    }
+
+    [Fact]
+    public void DownloadBytes_And_TotalBytes_SetCorrectly()
+    {
+        var item = new DownloadItem
+        {
+            DownloadedBytes = 5000,
+            TotalBytes = 10000
+        };
+
+        Assert.Equal(5000, item.DownloadedBytes);
+        Assert.Equal(10000, item.TotalBytes);
+    }
+
+    [Fact]
+    public void DownloadMode_DirectSet_AffectsComputedFlags()
+    {
+        var item = new DownloadItem
+        {
+            DownloadMode = (int)(DownloadMode.Video | DownloadMode.Audio)
+        };
+
+        Assert.True(item.DownloadVideo);
+        Assert.True(item.DownloadAudio);
+        Assert.False(item.DownloadOriginAudio);
+    }
+
+    [Fact]
+    public void SaveLocation_Default_IsEmpty()
+    {
+        var item = new DownloadItem();
+
+        Assert.Equal(string.Empty, item.SaveLocation);
+    }
+
+    [Fact]
+    public void CurrentFileName_Default_IsEmpty()
+    {
+        var item = new DownloadItem();
+
+        Assert.Equal(string.Empty, item.CurrentFileName);
+    }
 }

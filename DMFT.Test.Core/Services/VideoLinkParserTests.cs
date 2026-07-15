@@ -61,7 +61,7 @@ public class VideoLinkParserTests
     }
 
     [Fact]
-    public void GetPlatform_YouTuBeUrl_ReturnsYouTubeShorts()
+    public void GetPlatform_YoutuBeUrl_ReturnsYouTubeShorts()
     {
         var result = Parser.GetPlatform("https://youtu.be/dQw4w9WgXcQ");
 
@@ -144,7 +144,7 @@ public class VideoLinkParserTests
     }
 
     [Fact]
-    public void TryParseVideoId_YouTuBeUrl_ExtractsVideoId()
+    public void TryParseVideoId_YoutuBeUrl_ExtractsVideoId()
     {
         var result = Parser.TryParseVideoId(
             "https://youtu.be/dQw4w9WgXcQ", out var videoId);
@@ -201,5 +201,28 @@ public class VideoLinkParserTests
 
         Assert.True(result);
         Assert.Equal("1234567890", videoId);
+    }
+
+    [Theory]
+    [InlineData("https://WWW.YOUTUBE.COM/watch?v=dQw4w9WgXcQ")]
+    [InlineData("https://Youtu.Be/dQw4w9WgXcQ?t=30&list=PLabc")]
+    [InlineData("https://www.tiktok.com/@user/video/1234567890?reason=42")]
+    public void IsSupportedUrl_UppercaseAndComplexUrls_ReturnsTrue(string url)
+    {
+        var result = Parser.IsSupportedUrl(url);
+
+        Assert.True(result);
+    }
+
+    [Theory]
+    [InlineData("https://WWW.YOUTUBE.COM/watch?v=dQw4w9WgXcQ", "dQw4w9WgXcQ")]
+    [InlineData("https://Youtu.Be/dQw4w9WgXcQ?t=30&list=PLabc", "dQw4w9WgXcQ")]
+    [InlineData("https://www.tiktok.com/@user/video/1234567890?reason=42", "1234567890")]
+    public void TryParseVideoId_UppercaseAndComplexUrls_ExtractsCorrectId(string url, string expectedId)
+    {
+        var result = Parser.TryParseVideoId(url, out var videoId);
+
+        Assert.True(result);
+        Assert.Equal(expectedId, videoId);
     }
 }

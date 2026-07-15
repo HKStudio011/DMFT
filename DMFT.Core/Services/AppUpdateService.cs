@@ -53,8 +53,22 @@ public class AppUpdateService : IAppUpdateService
     public bool IsUpdateAvailable(ReleaseInfo release, string currentVersion)
     {
         var tag = release.TagName.TrimStart('v');
-        return string.Compare(tag, currentVersion,
-            StringComparison.OrdinalIgnoreCase) > 0;
+        return CompareSemanticVersions(tag, currentVersion) > 0;
+    }
+
+    private static int CompareSemanticVersions(string v1, string v2)
+    {
+        var parts1 = v1.Split('.', StringSplitOptions.RemoveEmptyEntries);
+        var parts2 = v2.Split('.', StringSplitOptions.RemoveEmptyEntries);
+        var maxParts = Math.Max(parts1.Length, parts2.Length);
+
+        for (var i = 0; i < maxParts; i++)
+        {
+            var num1 = i < parts1.Length && int.TryParse(parts1[i], out var p1) ? p1 : 0;
+            var num2 = i < parts2.Length && int.TryParse(parts2[i], out var p2) ? p2 : 0;
+            if (num1 != num2) return num1.CompareTo(num2);
+        }
+        return 0;
     }
 
     public async Task<string?> DownloadReleaseAsync(ReleaseInfo release, string destDir)

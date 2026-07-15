@@ -96,4 +96,26 @@ public class SettingsPageTests : IAsyncLifetime
         var toast = _page.GetByText("Settings saved");
         await Assertions.Expect(toast).ToBeVisibleAsync();
     }
+
+    [Fact]
+    public async Task SettingsPage_ChangeDefaultPath_ShowsSuccessToast()
+    {
+        // Seed a known default path first
+        await _fixture.SeedAppSettingAsync("defaultPath", @"C:\Original\Path");
+
+        await NavigateToSettingsAsync();
+
+        var pathInput = _page.GetByLabel("Default Download Path");
+        var exists = await pathInput.CountAsync();
+        if (exists > 0)
+        {
+            // Clear existing and type new path
+            await pathInput.FillAsync(@"C:\New\Test\Path");
+            await _page.GetByRole(AriaRole.Button, new() { Name = "Save Settings" }).ClickAsync();
+            await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+            var toast = _page.GetByText("Settings saved");
+            await Assertions.Expect(toast).ToBeVisibleAsync();
+        }
+    }
 }

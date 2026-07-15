@@ -1,10 +1,8 @@
 @page "/history"
-@using DMFT.Core.Entities
-@using DMFT.Core.Services
-@using DMFT.Shared.Components
 @inject DownloadService DownloadSvc
-@inject DownloadQueue Queue
-@inject ToastService Toast
+@inject IDownloadQueue Queue
+
+@rendermode InteractiveRenderSettings.InteractiveServer
 
 <PageTitle>DMFT - History</PageTitle>
 

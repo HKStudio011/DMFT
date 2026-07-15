@@ -1,13 +1,7 @@
 @page "/settings"
-@using DMFT.Core.Data
-@using DMFT.Core.Entities
-@using DMFT.Core.Services
-@using DMFT.Shared.Services
-@using Microsoft.EntityFrameworkCore
-@inject IDbContextFactory<AppDbContext> DbFactory
 @inject IAppUpdateService UpdateSvc
-@inject ToastService Toast
-@inject IJSRuntime JS
+
+@rendermode InteractiveRenderSettings.InteractiveServer
 
 <PageTitle>DMFT - Settings</PageTitle>
 

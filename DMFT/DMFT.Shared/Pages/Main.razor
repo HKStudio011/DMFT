@@ -1,11 +1,9 @@
 @page "/"
-@using DMFT.Core.Services
-@using DMFT.Core.Entities
-@using DMFT.Shared.Components
 @inject DownloadService DownloadSvc
 @inject IDownloadQueue Queue
-@inject ToastService Toast
 @implements IDisposable
+
+@rendermode InteractiveRenderSettings.InteractiveServer
 
 <PageTitle>DMFT - Download</PageTitle>
 
@@ -102,6 +100,7 @@ else
 <LoadingModal @ref="loadingModal" />
 
 @code {
+
     private List<DownloadItem> _items = new();
     private AddModal? addModal;
     private LoadingModal? loadingModal;

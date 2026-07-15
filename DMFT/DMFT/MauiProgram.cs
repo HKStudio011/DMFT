@@ -2,6 +2,7 @@
 using DMFT.Core.Services;
 using DMFT.Services;
 using DMFT.Shared.Services;
+using DMFT.Shared.Utilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -12,6 +13,7 @@ public static class MauiProgram
 {
     public static MauiApp CreateMauiApp()
     {
+        InteractiveRenderSettings.ConfigureBlazorHybridRenderModes();
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()

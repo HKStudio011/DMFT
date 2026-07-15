@@ -92,6 +92,53 @@ public class AppSettingsReaderTests
         return ctx;
     }
 
+    [Fact]
+    public async Task ReadQueueSettingsAsync_InvalidInteger_ReturnsNull()
+    {
+        var context = CreateEmptyDbContext();
+        context.AppSettings.Add(new AppSetting { Id = "maxConcurrent", Value = "not-a-number" });
+        context.AppSettings.Add(new AppSetting { Id = "delayBetweenMs", Value = "also-invalid" });
+        context.SaveChanges();
+        var factory = new Mock<IDbContextFactory<AppDbContext>>();
+        factory.Setup(f => f.CreateDbContextAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(context);
+
+        var (maxConcurrent, delayBetweenMs) =
+            await AppSettingsReader.ReadQueueSettingsAsync(factory.Object);
+
+        Assert.Null(maxConcurrent);
+        Assert.Null(delayBetweenMs);
+    }
+
+    [Fact]
+    public async Task ReadYtDlpConfigAsync_DbException_ReturnsNulls()
+    {
+        var factory = new Mock<IDbContextFactory<AppDbContext>>();
+        factory.Setup(f => f.CreateDbContextAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Connection failed"));
+
+        var (extraArgs, outputTemplate, formatString) =
+            await AppSettingsReader.ReadYtDlpConfigAsync(factory.Object);
+
+        Assert.Null(extraArgs);
+        Assert.Null(outputTemplate);
+        Assert.Null(formatString);
+    }
+
+    [Fact]
+    public async Task ReadQueueSettingsAsync_DbException_ReturnsNulls()
+    {
+        var factory = new Mock<IDbContextFactory<AppDbContext>>();
+        factory.Setup(f => f.CreateDbContextAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Connection failed"));
+
+        var (maxConcurrent, delayBetweenMs) =
+            await AppSettingsReader.ReadQueueSettingsAsync(factory.Object);
+
+        Assert.Null(maxConcurrent);
+        Assert.Null(delayBetweenMs);
+    }
+
     private static Mock<IDbContextFactory<AppDbContext>> CreateDbFactory(AppDbContext context)
     {
         var factory = new Mock<IDbContextFactory<AppDbContext>>();
