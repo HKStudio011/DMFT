@@ -1,6 +1,9 @@
+using DMFT.Core.Utilities;
 using DMFT.Shared.Services;
 using DMFT.Web.Client.Services;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+
+TargetPlatform.SetCurrentPlatform(TargetPlatform.Platform.Web | TargetPlatform.Platform.WebAssembly);
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 

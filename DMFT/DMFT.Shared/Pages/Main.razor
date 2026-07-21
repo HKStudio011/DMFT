@@ -2,7 +2,7 @@
 @inject DownloadService DownloadSvc
 @inject IDownloadQueue Queue
 @implements IDisposable
-
+@inject IDbContextFactory<AppDbContext> DbFactory
 @rendermode InteractiveRenderSettings.InteractiveServer
 
 <PageTitle>DMFT - Download</PageTitle>

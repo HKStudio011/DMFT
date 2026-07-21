@@ -1,5 +1,6 @@
 ﻿using DMFT.Core.Data;
 using DMFT.Core.Services;
+using DMFT.Core.Utilities;
 using DMFT.Services;
 using DMFT.Shared.Services;
 using DMFT.Shared.Utilities;
@@ -14,6 +15,11 @@ public static class MauiProgram
     public static MauiApp CreateMauiApp()
     {
         InteractiveRenderSettings.ConfigureBlazorHybridRenderModes();
+#if WINDOWS
+        TargetPlatform.SetCurrentPlatform(TargetPlatform.Platform.Windows | TargetPlatform.Platform.Maui);
+#endif
+
+
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
@@ -24,8 +30,23 @@ public static class MauiProgram
 
         // Platform services
         builder.Services.AddSingleton<IFormFactor, FormFactor>();
-        builder.Services.AddSingleton<IStoragePathProvider, StoragePathProvider>();
+        builder.Services.AddSingleton<IStoragePathProvider>(_ =>
+        {
+#if WINDOWS
+            var appDataPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "DMFT");
+            return new StoragePathProvider(appDataPath);
+#else
+            var appDataPath = FileSystem.Current.AppDataDirectory;
+            return new StoragePathProvider(appDataPath);
+#endif
+        });
+
         builder.Services.AddSingleton<IFolderPicker, FolderPicker>();
+
+        // App settings (must be registered before YtDlpConfigProvider)
+        builder.Services.AddSingleton<IAppSettingsService, AppSettingsService>();
 
         // yt-dlp config
         builder.Services.AddSingleton<IYtDlpConfigProvider, YtDlpConfigProvider>();
@@ -75,12 +96,8 @@ public static class MauiProgram
                     context.Database.Migrate();
                 }
 
-                var config = scope.ServiceProvider.GetRequiredService<IYtDlpConfigProvider>();
-                var queue = scope.ServiceProvider.GetRequiredService<IDownloadQueue>();
-                Task.WhenAll(
-                    config.InitializeFromDbAsync(factory),
-                    queue.InitializeFromDbAsync(factory)
-                ).GetAwaiter().GetResult();
+                var settings = scope.ServiceProvider.GetRequiredService<IAppSettingsService>();
+                settings.InitAsync().GetAwaiter().GetResult();
             }
         }
         catch (Exception ex)

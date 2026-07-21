@@ -1,4 +1,4 @@
-namespace DMFT.Shared.Services;
+namespace DMFT.Core.Services;
 
 public interface IStoragePathProvider
 {

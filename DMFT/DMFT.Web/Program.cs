@@ -1,9 +1,12 @@
 using DMFT.Core.Data;
 using DMFT.Core.Services;
+using DMFT.Core.Utilities;
 using DMFT.Shared.Services;
 using DMFT.Web.Components;
 using DMFT.Web.Services;
 using Microsoft.EntityFrameworkCore;
+
+TargetPlatform.SetCurrentPlatform(TargetPlatform.Platform.Web);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,8 +16,14 @@ builder.Services.AddRazorComponents()
 
 // Platform services
 builder.Services.AddSingleton<IFormFactor, FormFactor>();
-builder.Services.AddSingleton<IStoragePathProvider, StoragePathProvider>();
+builder.Services.AddSingleton<IStoragePathProvider>(sp => {
+    var env = sp.GetRequiredService<IWebHostEnvironment>();
+    return new StoragePathProvider(Path.Combine(env.ContentRootPath, "App_Data"));
+});
 builder.Services.AddSingleton<IFolderPicker, FolderPicker>();
+
+// App settings (must be registered before YtDlpConfigProvider)
+builder.Services.AddSingleton<IAppSettingsService, AppSettingsService>();
 
 // yt-dlp config
 builder.Services.AddSingleton<IYtDlpConfigProvider, YtDlpConfigProvider>();
@@ -57,12 +66,8 @@ try
             await context.Database.MigrateAsync();
         }
 
-        var config = scope.ServiceProvider.GetRequiredService<IYtDlpConfigProvider>();
-        var queue = scope.ServiceProvider.GetRequiredService<IDownloadQueue>();
-        await Task.WhenAll(
-            config.InitializeFromDbAsync(factory),
-            queue.InitializeFromDbAsync(factory)
-        );
+        var settings = scope.ServiceProvider.GetRequiredService<IAppSettingsService>();
+        await settings.InitAsync();
     }
 }
 catch (Exception ex)

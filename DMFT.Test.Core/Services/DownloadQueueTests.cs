@@ -15,7 +15,10 @@ public class DownloadQueueTests
         engineMock.Setup(e => e.StartDownloadAsync(It.IsAny<DownloadItem>()))
             .Returns(Task.CompletedTask);
         var serviceMock = new Mock<DownloadService>(Mock.Of<IDbContextFactory<AppDbContext>>());
-        return new DownloadQueue(engineMock.Object, serviceMock.Object);
+        var settingsMock = new Mock<IAppSettingsService>();
+        settingsMock.Setup(s => s.GetInt("maxConcurrent", 3)).Returns(3);
+        settingsMock.Setup(s => s.GetInt("delayBetweenMs", 2000)).Returns(2000);
+        return new DownloadQueue(engineMock.Object, serviceMock.Object, settingsMock.Object);
     }
 
     private static DownloadQueue CreateQueue()

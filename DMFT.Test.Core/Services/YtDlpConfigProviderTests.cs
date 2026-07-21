@@ -1,7 +1,5 @@
-using DMFT.Core.Data;
 using DMFT.Core.Services;
 using DMFT.Shared.Services;
-using Microsoft.EntityFrameworkCore;
 using Moq;
 
 namespace DMFT.Test.Core.Services;
@@ -63,8 +61,6 @@ public class MauiTestProvider : IYtDlpConfigProvider
         if (!File.Exists(ExecutablePath))
             ExecutablePath = Path.Combine(AppContext.BaseDirectory, "yt-dlp", "yt-dlp.exe");
     }
-
-    public Task InitializeFromDbAsync(IDbContextFactory<AppDbContext> dbFactory) => Task.CompletedTask;
 }
 
 public class WebTestProvider : IYtDlpConfigProvider
@@ -81,6 +77,4 @@ public class WebTestProvider : IYtDlpConfigProvider
         if (!File.Exists(ExecutablePath))
             ExecutablePath = "yt-dlp";
     }
-
-    public Task InitializeFromDbAsync(IDbContextFactory<AppDbContext> dbFactory) => Task.CompletedTask;
 }

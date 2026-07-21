@@ -6,144 +6,133 @@ using Moq;
 
 namespace DMFT.Test.Core.Services;
 
-public class AppSettingsReaderTests
+public class AppSettingsServiceTests
 {
     [Fact]
-    public async Task ReadYtDlpConfigAsync_SettingsExist_ReturnsValues()
+    public async Task InitAsync_LoadsAllSettings()
     {
-        var dbFactory = CreateDbFactoryWithSettings();
+        var (svc, ctx) = CreateServiceWithSettings();
 
-        var (extraArgs, outputTemplate, formatString) =
-            await AppSettingsReader.ReadYtDlpConfigAsync(dbFactory.Object);
+        await svc.InitAsync();
 
-        Assert.Equal("--no-warnings", extraArgs);
-        Assert.Equal("%(title)s.%(ext)s", outputTemplate);
-        Assert.Equal("bestvideo+bestaudio", formatString);
+        Assert.Equal("--no-warnings", svc.Get("ytdlp_extra_args"));
+        Assert.Equal("%(title)s.%(ext)s", svc.Get("ytdlp_output_template"));
+        Assert.Equal("bestvideo+bestaudio", svc.Get("ytdlp_format"));
+        Assert.Equal(3, svc.GetInt("maxConcurrent", 0));
+        Assert.Equal(5000, svc.GetInt("delayBetweenMs", 0));
+        Assert.Equal("dark", svc.Get("theme"));
+        Assert.Equal("gold", svc.Get("accentColor"));
+        Assert.Equal(@"C:\Downloads", svc.Get("defaultPath"));
     }
 
     [Fact]
-    public async Task ReadYtDlpConfigAsync_NoSettings_ReturnsNulls()
+    public async Task InitAsync_EmptyDb_ReturnsNulls()
     {
-        var dbFactory = CreateEmptyDbFactory();
+        var (svc, _) = CreateEmptyService();
 
-        var (extraArgs, outputTemplate, formatString) =
-            await AppSettingsReader.ReadYtDlpConfigAsync(dbFactory.Object);
+        await svc.InitAsync();
 
-        Assert.Null(extraArgs);
-        Assert.Null(outputTemplate);
-        Assert.Null(formatString);
+        Assert.Null(svc.Get("ytdlp_extra_args"));
+        Assert.Equal(42, svc.GetInt("missing", 42));
     }
 
     [Fact]
-    public async Task ReadQueueSettingsAsync_SettingsExist_ReturnsValues()
+    public async Task SetAsync_UpsertsAndCaches()
     {
-        var dbFactory = CreateDbFactoryWithSettings();
+        var (svc, ctx) = CreateEmptyService();
 
-        var (maxConcurrent, delayBetweenMs) =
-            await AppSettingsReader.ReadQueueSettingsAsync(dbFactory.Object);
+        await svc.SetAsync("theme", "dark");
 
-        Assert.Equal(3, maxConcurrent);
-        Assert.Equal(5000, delayBetweenMs);
+        Assert.Equal("dark", svc.Get("theme"));
+        var db = ctx.Object;
+        var saved = await db.AppSettings.FindAsync("theme");
+        Assert.Equal("dark", saved?.Value);
     }
 
     [Fact]
-    public async Task ReadQueueSettingsAsync_NoSettings_ReturnsNulls()
+    public async Task SetAsync_OverridesExisting()
     {
-        var dbFactory = CreateEmptyDbFactory();
+        var (svc, _) = CreateServiceWithSettings();
 
-        var (maxConcurrent, delayBetweenMs) =
-            await AppSettingsReader.ReadQueueSettingsAsync(dbFactory.Object);
+        await svc.InitAsync();
+        await svc.SetAsync("theme", "light");
 
-        Assert.Null(maxConcurrent);
-        Assert.Null(delayBetweenMs);
+        Assert.Equal("light", svc.Get("theme"));
     }
 
-    private static Mock<IDbContextFactory<AppDbContext>> CreateDbFactoryWithSettings()
+    [Fact]
+    public void Get_NotInitialized_ReturnsNull()
     {
-        var context = CreateDbContextWithSettings();
-        return CreateDbFactory(context);
+        var (svc, _) = CreateEmptyService();
+
+        Assert.Null(svc.Get("anything"));
     }
 
-    private static Mock<IDbContextFactory<AppDbContext>> CreateEmptyDbFactory()
+    [Fact]
+    public void GetInt_NotInitialized_ReturnsDefault()
     {
-        var context = CreateEmptyDbContext();
-        return CreateDbFactory(context);
+        var (svc, _) = CreateEmptyService();
+
+        Assert.Equal(99, svc.GetInt("anything", 99));
     }
 
-    private static AppDbContext CreateEmptyDbContext()
+    [Fact]
+    public async Task GetInt_ParsesInteger()
     {
+        var (svc, _) = CreateEmptyService();
+        await svc.InitAsync();
+
+        Assert.Equal(0, svc.GetInt("missing", 0));
+    }
+
+    private static (AppSettingsService, Mock<AppDbContext>) CreateServiceWithSettings()
+    {
+        var dbName = $"TestDb_{Guid.NewGuid()}";
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase($"TestDb_{Guid.NewGuid()}")
+            .UseInMemoryDatabase(dbName)
             .Options;
-        return new AppDbContext(options);
-    }
-
-    private static AppDbContext CreateDbContextWithSettings()
-    {
-        var ctx = CreateEmptyDbContext();
+        var ctx = new AppDbContext(options);
         ctx.AppSettings.AddRange(
             new AppSetting { Id = "ytdlp_extra_args", Value = "--no-warnings" },
             new AppSetting { Id = "ytdlp_output_template", Value = "%(title)s.%(ext)s" },
             new AppSetting { Id = "ytdlp_format", Value = "bestvideo+bestaudio" },
             new AppSetting { Id = "maxConcurrent", Value = "3" },
-            new AppSetting { Id = "delayBetweenMs", Value = "5000" }
+            new AppSetting { Id = "delayBetweenMs", Value = "5000" },
+            new AppSetting { Id = "theme", Value = "dark" },
+            new AppSetting { Id = "accentColor", Value = "gold" },
+            new AppSetting { Id = "defaultPath", Value = @"C:\Downloads" }
         );
         ctx.SaveChanges();
-        return ctx;
-    }
 
-    [Fact]
-    public async Task ReadQueueSettingsAsync_InvalidInteger_ReturnsNull()
-    {
-        var context = CreateEmptyDbContext();
-        context.AppSettings.Add(new AppSetting { Id = "maxConcurrent", Value = "not-a-number" });
-        context.AppSettings.Add(new AppSetting { Id = "delayBetweenMs", Value = "also-invalid" });
-        context.SaveChanges();
         var factory = new Mock<IDbContextFactory<AppDbContext>>();
         factory.Setup(f => f.CreateDbContextAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(context);
+            .ReturnsAsync(() => new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
+                .UseInMemoryDatabase(dbName).Options));
 
-        var (maxConcurrent, delayBetweenMs) =
-            await AppSettingsReader.ReadQueueSettingsAsync(factory.Object);
+        var svc = new AppSettingsService(factory.Object);
 
-        Assert.Null(maxConcurrent);
-        Assert.Null(delayBetweenMs);
+        var mockCtx = new Mock<AppDbContext>(options);
+
+        return (svc, mockCtx);
     }
 
-    [Fact]
-    public async Task ReadYtDlpConfigAsync_DbException_ReturnsNulls()
+    private static (AppSettingsService, Mock<AppDbContext>) CreateEmptyService()
     {
+        var dbName = $"TestDb_{Guid.NewGuid()}";
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(dbName)
+            .Options;
+        _ = new AppDbContext(options);
+
         var factory = new Mock<IDbContextFactory<AppDbContext>>();
         factory.Setup(f => f.CreateDbContextAsync(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("Connection failed"));
+            .ReturnsAsync(() => new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
+                .UseInMemoryDatabase(dbName).Options));
 
-        var (extraArgs, outputTemplate, formatString) =
-            await AppSettingsReader.ReadYtDlpConfigAsync(factory.Object);
+        var svc = new AppSettingsService(factory.Object);
 
-        Assert.Null(extraArgs);
-        Assert.Null(outputTemplate);
-        Assert.Null(formatString);
-    }
+        var mockCtx = new Mock<AppDbContext>(options);
 
-    [Fact]
-    public async Task ReadQueueSettingsAsync_DbException_ReturnsNulls()
-    {
-        var factory = new Mock<IDbContextFactory<AppDbContext>>();
-        factory.Setup(f => f.CreateDbContextAsync(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("Connection failed"));
-
-        var (maxConcurrent, delayBetweenMs) =
-            await AppSettingsReader.ReadQueueSettingsAsync(factory.Object);
-
-        Assert.Null(maxConcurrent);
-        Assert.Null(delayBetweenMs);
-    }
-
-    private static Mock<IDbContextFactory<AppDbContext>> CreateDbFactory(AppDbContext context)
-    {
-        var factory = new Mock<IDbContextFactory<AppDbContext>>();
-        factory.Setup(f => f.CreateDbContextAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(context);
-        return factory;
+        return (svc, mockCtx);
     }
 }

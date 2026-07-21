@@ -1,6 +1,6 @@
 @page "/settings"
 @inject IAppUpdateService UpdateSvc
-
+@inject IDbContextFactory<AppDbContext> DbFactory
 @rendermode InteractiveRenderSettings.InteractiveServer
 
 <PageTitle>DMFT - Settings</PageTitle>

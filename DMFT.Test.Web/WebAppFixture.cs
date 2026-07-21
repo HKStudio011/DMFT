@@ -36,6 +36,7 @@ public class WebAppFixture : IAsyncLifetime
         builder.Services.AddSingleton<IFormFactor, FormFactor>();
         builder.Services.AddSingleton<IStoragePathProvider, StoragePathProvider>();
         builder.Services.AddSingleton<IFolderPicker, FolderPicker>();
+        builder.Services.AddSingleton<IAppSettingsService, AppSettingsService>();
         builder.Services.AddSingleton<IYtDlpConfigProvider, YtDlpConfigProvider>();
         builder.Services.AddDbContextFactory<AppDbContext>((sp, options) =>
         {
@@ -70,12 +71,8 @@ public class WebAppFixture : IAsyncLifetime
                     await context.Database.MigrateAsync();
                 }
 
-                var config = scope.ServiceProvider.GetRequiredService<IYtDlpConfigProvider>();
-                var queue = scope.ServiceProvider.GetRequiredService<IDownloadQueue>();
-                await Task.WhenAll(
-                    config.InitializeFromDbAsync(factory),
-                    queue.InitializeFromDbAsync(factory)
-                );
+                var settings = scope.ServiceProvider.GetRequiredService<IAppSettingsService>();
+                await settings.InitAsync();
             }
         }
         catch (Exception ex)

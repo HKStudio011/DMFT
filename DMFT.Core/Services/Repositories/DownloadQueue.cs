@@ -1,13 +1,10 @@
 using System.Collections.Concurrent;
-using DMFT.Core.Data;
 using DMFT.Core.Entities;
-using Microsoft.EntityFrameworkCore;
 
 namespace DMFT.Core.Services;
 
 public interface IDownloadQueue
 {
-    Task InitializeFromDbAsync(IDbContextFactory<AppDbContext> dbFactory);
     Task EnqueueDownloadAsync(DownloadItem item);
     bool IsProcessing { get; }
     int MaxConcurrent { get; set; }
@@ -29,19 +26,15 @@ public class DownloadQueue : IDownloadQueue
     public int DelayBetweenMs { get => _delayBetweenMs; set => _delayBetweenMs = Math.Max(500, value); }
     public event Action? OnQueueUpdated;
 
-    public DownloadQueue(IDownloadEngine engine, DownloadService downloadService)
+    public DownloadQueue(IDownloadEngine engine, DownloadService downloadService, IAppSettingsService settings)
     {
         _engine = engine;
         _downloadService = downloadService;
-    }
 
-    public async Task InitializeFromDbAsync(IDbContextFactory<AppDbContext> dbFactory)
-    {
-        var (maxConcurrent, delayBetweenMs) = await AppSettingsReader.ReadQueueSettingsAsync(dbFactory);
-        if (maxConcurrent.HasValue)
-            MaxConcurrent = Math.Max(1, maxConcurrent.Value);
-        if (delayBetweenMs.HasValue)
-            DelayBetweenMs = Math.Max(500, delayBetweenMs.Value);
+        var maxConc = settings.GetInt("maxConcurrent", 3);
+        var delay = settings.GetInt("delayBetweenMs", 2000);
+        _maxConcurrent = Math.Max(1, maxConc);
+        _delayBetweenMs = Math.Max(500, delay);
     }
 
     public async Task EnqueueDownloadAsync(DownloadItem item)
