@@ -8,39 +8,13 @@ using Microsoft.Extensions.Logging;
 
 namespace DMFT.Test.Web;
 
-public class WebAppFixture : WebApplicationFactory<Program>, IAsyncLifetime
+public class WebAppFixture : WebApplicationFactory<Program>
 {
     public string BaseUrl { get; private set; } = null!;
 
     public WebAppFixture()
     {
         UseKestrel(0);
-    }
-
-    public async ValueTask InitializeAsync()
-    {
-        var client = CreateDefaultClient();
-        BaseUrl = client.BaseAddress?.ToString().TrimEnd('/') ?? "http://localhost";
-
-        try
-        {
-            using var scope = Services.CreateScope();
-            var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
-            using var context = await factory.CreateDbContextAsync();
-            await context.Database.MigrateAsync();
-            var settings = scope.ServiceProvider.GetRequiredService<IAppSettingsService>();
-            await settings.InitAsync();
-        }
-        catch (Exception ex)
-        {
-            var logger = Services.GetRequiredService<ILogger<WebAppFixture>>();
-            logger.LogWarning(ex, "Database migration failed (non-fatal)");
-        }
-    }
-
-    public new async ValueTask DisposeAsync()
-    {
-        Dispose();
     }
 
     public async Task ResetDatabaseAsync()
