@@ -1,9 +1,6 @@
 using DMFT.Core.Data;
 using DMFT.Core.Entities;
 using DMFT.Core.Services;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Hosting.Server;
-using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,18 +12,15 @@ public class WebAppFixture : WebApplicationFactory<Program>, IAsyncLifetime
 {
     public string BaseUrl { get; private set; } = null!;
 
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    public WebAppFixture()
     {
-        builder.UseUrls("http://127.0.0.1:0");
+        UseKestrel(0);
     }
 
     public async ValueTask InitializeAsync()
     {
-        CreateDefaultClient();
-
-        var server = Services.GetRequiredService<IServer>();
-        var addresses = server.Features.Get<IServerAddressesFeature>()?.Addresses;
-        BaseUrl = addresses?.First() ?? "http://localhost";
+        var client = CreateDefaultClient();
+        BaseUrl = client.BaseAddress?.ToString().TrimEnd('/') ?? "http://localhost";
 
         try
         {
