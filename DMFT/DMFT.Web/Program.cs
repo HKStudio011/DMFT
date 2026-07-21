@@ -15,7 +15,6 @@ builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 
 // Platform services
-builder.Services.AddSingleton<IFormFactor, FormFactor>();
 builder.Services.AddSingleton<IStoragePathProvider>(sp => {
     var env = sp.GetRequiredService<IWebHostEnvironment>();
     return new StoragePathProvider(Path.Combine(env.ContentRootPath, "App_Data"));

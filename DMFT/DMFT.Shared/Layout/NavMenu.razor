@@ -1,6 +1,6 @@
 ﻿@using System.Reflection
-@using DMFT.Shared.Services
-@inject IFormFactor FormFactor
+@using DMFT.Core.Services
+@using DMFT.Core.Utilities
 
 <div class="p-4 border-b border-outline-variant">
     <a class="text-xl font-bold text-primary no-underline" href="">DMFT</a>
@@ -25,5 +25,5 @@
 </nav>
 
 <div class="p-3 border-t border-outline-variant text-xs text-on-surface-dim">
-    <span>@FormFactor.GetFormFactor() - v@(Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "Unknown")</span>
+    <span>@TargetPlatform.GetFormFactor() - v@(Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "Unknown")</span>
 </div>

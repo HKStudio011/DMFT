@@ -33,8 +33,9 @@ public class WebAppFixture : IAsyncLifetime
             .AddInteractiveServerComponents()
             .AddInteractiveWebAssemblyComponents();
 
-        builder.Services.AddSingleton<IFormFactor, FormFactor>();
-        builder.Services.AddSingleton<IStoragePathProvider, StoragePathProvider>();
+        builder.Services.AddSingleton<IFormFactor>(new FormFactor());
+        builder.Services.AddSingleton<IStoragePathProvider>(
+            new StoragePathProvider(Path.Combine(webProjectPath, "App_Data")));
         builder.Services.AddSingleton<IFolderPicker, FolderPicker>();
         builder.Services.AddSingleton<IAppSettingsService, AppSettingsService>();
         builder.Services.AddSingleton<IYtDlpConfigProvider, YtDlpConfigProvider>();

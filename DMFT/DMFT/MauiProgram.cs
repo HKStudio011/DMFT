@@ -29,7 +29,6 @@ public static class MauiProgram
             });
 
         // Platform services
-        builder.Services.AddSingleton<IFormFactor, FormFactor>();
         builder.Services.AddSingleton<IStoragePathProvider>(_ =>
         {
 #if WINDOWS

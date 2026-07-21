@@ -1,3 +1,4 @@
+using DMFT.Core.Services;
 using DMFT.Core.Utilities;
 using DMFT.Shared.Services;
 using DMFT.Web.Client.Services;
@@ -7,7 +8,6 @@ TargetPlatform.SetCurrentPlatform(TargetPlatform.Platform.Web | TargetPlatform.P
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
-builder.Services.AddSingleton<IFormFactor, FormFactor>();
 builder.Services.AddSingleton<IFolderPicker, FolderPicker>();
 builder.Services.AddSingleton<ToastService>();
 

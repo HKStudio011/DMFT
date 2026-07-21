@@ -26,5 +26,19 @@ namespace DMFT.Core.Utilities
             CurrentPlatform = platform;
         }
 
+        public static string GetFormFactor()
+        {
+            var platform = CurrentPlatform;
+
+            if (platform.HasFlag(Platform.WebAssembly))
+                return "WebAssembly";
+            if (platform.HasFlag(Platform.Web))
+                return "Web";
+            if (platform.HasFlag(Platform.Maui))
+                return "MAUI";
+
+            return platform.ToString();
+        }
+
     }
 }
