@@ -96,3 +96,5 @@ app.MapRazorComponents<App>()
         typeof(DMFT.Web.Client._Imports).Assembly);
 
 app.Run();
+
+public partial class Program { }
