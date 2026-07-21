@@ -1,7 +1,6 @@
 ﻿using DMFT.Core.Data;
 using DMFT.Core.Services;
 using DMFT.Core.Utilities;
-using DMFT.Services;
 using DMFT.Shared.Services;
 using DMFT.Shared.Utilities;
 using Microsoft.EntityFrameworkCore;
@@ -41,8 +40,6 @@ public static class MauiProgram
             return new StoragePathProvider(appDataPath);
 #endif
         });
-
-        builder.Services.AddSingleton<IFolderPicker, FolderPicker>();
 
         // App settings (must be registered before YtDlpConfigProvider)
         builder.Services.AddSingleton<IAppSettingsService, AppSettingsService>();
