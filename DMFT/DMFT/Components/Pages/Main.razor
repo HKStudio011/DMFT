@@ -8,8 +8,8 @@
 <PageTitle>DMFT - Download</PageTitle>
 
 <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-bold text-on-surface m-0">Downloads</h1>
-    <button class="px-4 py-2 rounded bg-primary text-on-primary hover:brightness-110 border-0 cursor-pointer text-sm font-medium flex items-center gap-2"
+    <h1 class="text-2xl font-bold text-surface m-0">Downloads</h1>
+    <button class="btn btn-primary"
             @onclick="ShowAddModal">
         <span>+</span> Add URLs
     </button>
@@ -19,7 +19,7 @@
 
 @if (_items.Count == 0)
 {
-    <div class="text-center py-16 text-on-surface-dim">
+    <div class="text-center py-16 text-secondary">
         <div class="text-5xl mb-4 opacity-50">&#9654;</div>
         <p class="text-lg">No downloads yet. Click <strong>Add URLs</strong> to get started.</p>
     </div>
@@ -27,7 +27,7 @@
 else
 {
     <div class="mb-3 flex items-center gap-3 flex-wrap">
-        <span class="text-sm font-bold whitespace-nowrap text-on-surface">Set All:</span>
+        <span class="text-sm font-bold whitespace-nowrap text-surface">Set All:</span>
         <label class="flex items-center gap-1.5 text-sm cursor-pointer select-none">
             <input type="checkbox" class="w-4 h-4 accent-primary" @bind="_setAllVideo" />
             Video
@@ -40,25 +40,25 @@ else
             <input type="checkbox" class="w-4 h-4 accent-primary" @bind="_setAllOriginAudio" />
             Origin Audio
         </label>
-        <button class="px-3 py-1 rounded text-xs bg-primary-container text-on-primary-container hover:brightness-110 border-0 cursor-pointer"
+        <button class="px-3 py-1 rounded text-xs bg-primary-container text-primary hover:brightness-110 border-0 cursor-pointer"
                 @onclick="ApplyModeToAll">Apply to All</button>
     </div>
 
     <div class="space-y-3">
         @foreach (var item in _items.OrderByDescending(x => x.Time))
         {
-            <div class="bg-surface rounded-lg p-4 flex flex-col gap-2 border border-outline-variant">
+            <div class="bg-surface rounded-lg p-4 flex flex-col gap-2 border border-outline">
                 <div class="flex items-center gap-3">
-                    <span class="px-2 py-0.5 rounded text-xs font-medium text-on-primary bg-primary">@item.Platform</span>
-                    <span class="flex-1 text-sm text-on-surface truncate">@item.Url</span>
-                    <span class="text-xs text-on-surface-variant">@GetStatusLabel(item.Status)</span>
+                    <span class="px-2 py-0.5 rounded text-xs font-medium text-light bg-primary">@item.Platform</span>
+                    <span class="flex-1 text-sm text-surface truncate">@item.Url</span>
+                    <span class="text-xs text-surface">@GetStatusLabel(item.Status)</span>
                     @if (string.IsNullOrEmpty(item.CurrentFileName))
                     {
-                        <span class="text-xs px-2 py-0.5 rounded bg-error text-on-error">Missing</span>
+                        <span class="text-xs px-2 py-0.5 rounded bg-danger text-light">Missing</span>
                     }
                 </div>
                 <div class="flex items-center gap-3 flex-wrap">
-                    <span class="text-xs text-on-surface-variant">Mode:</span>
+                    <span class="text-xs text-surface">Mode:</span>
                     <label class="flex items-center gap-1 text-xs cursor-pointer select-none">
                         <input type="checkbox" class="w-3.5 h-3.5 accent-primary" @bind="item.DownloadVideo" />
                         Video
@@ -77,19 +77,19 @@ else
                 </div>
                 @if (item.ProgressPercent > 0 && item.ProgressPercent < 100)
                 {
-                    <div class="w-full h-2 bg-surface-variant rounded-full overflow-hidden">
+                    <div class="w-full h-2 bg-surface rounded-full overflow-hidden">
                         <div class="h-full bg-primary rounded-full transition-all duration-300" style="width: @item.ProgressPercent%"></div>
                     </div>
-                    <span class="text-xs text-on-surface-dim">@item.ProgressPercent%</span>
+                    <span class="text-xs text-secondary">@item.ProgressPercent%</span>
                 }
                 <div class="flex gap-2 mt-1">
-                    <button class="px-3 py-1.5 rounded text-xs bg-primary text-on-primary hover:brightness-110 border-0 cursor-pointer"
+                    <button class="btn btn-sm btn-primary"
                             @onclick="() => DownloadAsync(item)">Download</button>
-                    <button class="px-3 py-1.5 rounded text-xs bg-error text-on-error hover:brightness-110 border-0 cursor-pointer"
+                    <button class="btn btn-sm btn-danger"
                             @onclick="() => RemoveItem(item)">Remove</button>
                     @if (!string.IsNullOrEmpty(item.CurrentFileName))
                     {
-                        <span class="px-3 py-1.5 rounded text-xs bg-primary-container text-on-primary-container">@item.CurrentFileName</span>
+                        <span class="px-3 py-1.5 rounded text-xs bg-primary-container text-primary">@item.CurrentFileName</span>
                     }
                 </div>
             </div>

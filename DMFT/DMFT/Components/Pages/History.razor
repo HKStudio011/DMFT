@@ -7,19 +7,19 @@
 
 <PageTitle>DMFT - History</PageTitle>
 
-<h1 class="text-2xl font-bold text-on-surface mb-6">Download History</h1>
+<h1 class="text-2xl font-bold text-surface mb-6">Download History</h1>
 
 @if (_items.Count == 0)
 {
-    <div class="text-center py-16 text-on-surface-dim">
+    <div class="text-center py-16 text-secondary">
         <p class="text-lg">No download history yet.</p>
     </div>
 }
 else
 {
-    <div class="overflow-x-auto rounded-lg border border-outline-variant">
-        <table class="w-full text-sm bg-surface text-on-surface">
-            <thead class="bg-surface-container-low text-on-surface-variant border-b border-outline-variant">
+    <div class="overflow-x-auto rounded-lg border border-outline">
+        <table class="w-full text-sm bg-surface text-surface">
+            <thead class="bg-surface text-surface border-b border-outline">
                 <tr>
                     <th class="text-left px-4 py-3">Platform</th>
                     <th class="text-left px-4 py-3">Video ID</th>
@@ -31,19 +31,19 @@ else
             <tbody>
                 @foreach (var item in _items.OrderByDescending(x => x.Time))
                 {
-                    <tr class="border-b border-outline-variant hover:bg-surface-container-low">
+                    <tr class="border-b border-outline hover:bg-surface">
                         <td class="px-4 py-3">
-                            <span class="px-2 py-0.5 rounded text-xs font-medium text-on-primary bg-primary">@item.Platform</span>
+                            <span class="px-2 py-0.5 rounded text-xs font-medium text-light bg-primary">@item.Platform</span>
                         </td>
-                        <td class="px-4 py-3 text-on-surface-dim">@item.VideoId</td>
+                        <td class="px-4 py-3 text-secondary">@item.VideoId</td>
                         <td class="px-4 py-3">
-                            <span class="text-sm @(item.Status == 4 ? "text-primary" : "text-on-surface-dim")">@GetStatusLabel(item.Status)</span>
+                            <span class="text-sm @(item.Status == 4 ? "text-primary" : "text-secondary")">@GetStatusLabel(item.Status)</span>
                         </td>
-                        <td class="px-4 py-3 text-on-surface-dim">@item.Time.ToLocalTime().ToString("g")</td>
+                        <td class="px-4 py-3 text-secondary">@item.Time.ToLocalTime().ToString("g")</td>
                         <td class="px-4 py-3 flex gap-2">
-                            <button class="px-3 py-1.5 rounded text-xs bg-primary text-on-primary hover:brightness-110 border-0 cursor-pointer"
+                            <button class="btn btn-sm btn-primary"
                                     @onclick="() => RetryAsync(item)">Retry</button>
-                            <button class="px-3 py-1.5 rounded text-xs bg-error text-on-error hover:brightness-110 border-0 cursor-pointer"
+                            <button class="btn btn-sm btn-danger"
                                     @onclick="() => DeleteAsync(item)">Delete</button>
                         </td>
                     </tr>
