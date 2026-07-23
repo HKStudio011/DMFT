@@ -1,8 +1,8 @@
-﻿using DMFT.Core.Data;
-using DMFT.Core.Services;
-using DMFT.Core.Utilities;
-using DMFT.Shared.Services;
+﻿using CommunityToolkit.Maui;
+using DMFT.Data;
+using DMFT.Services;
 using DMFT.Shared.Utilities;
+using DMFT.Utilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -22,6 +22,7 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
+            .UseMauiCommunityToolkit()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
