@@ -4,7 +4,7 @@
 <div class="fixed bottom-5 right-5 z-[9999] flex flex-col gap-2 items-end">
     @foreach (var t in _toasts.Where(x => x.Scope == Scope))
     {
-        <div class="flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg text-sm @(t.Level == ToastLevel.Error ? "bg-error text-on-error" : t.Level == ToastLevel.Success ? "bg-primary text-on-primary" : t.Level == ToastLevel.Warning ? "bg-yellow-500 text-white" : "bg-surface text-on-surface")" style="min-width: 250px;">
+        <div class="flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg text-sm @(t.Level == ToastLevel.Error ? "bg-danger text-light" : t.Level == ToastLevel.Success ? "bg-primary text-light" : t.Level == ToastLevel.Warning ? "bg-warning text-dark" : "bg-surface text-surface")" style="min-width: 250px;">
             <span>@GetIcon(t.Level)</span>
             <span>@t.Message</span>
         </div>

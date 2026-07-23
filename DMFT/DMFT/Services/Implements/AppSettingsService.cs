@@ -48,7 +48,6 @@ public class AppSettingsService : IAppSettingsService
     public async Task ApplyThemeAsync(IJSRuntime js)
     {
         var theme = Get("theme") ?? "system";
-        var color = Get("accentColor") ?? "blue";
-        await js.InvokeVoidAsync("dmftTheme.applyTheme", theme, color);
+        await js.InvokeVoidAsync("dmftTheme.applyTheme", theme);
     }
 }

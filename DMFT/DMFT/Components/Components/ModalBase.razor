@@ -1,24 +1,24 @@
 <div class="@(IsVisible ? "fixed inset-0 z-50 flex items-center justify-center" : "hidden")">
     <div class="fixed inset-0 bg-black/50" @onclick="Close"></div>
     <div class="relative bg-surface rounded-lg shadow-xl max-w-lg w-full mx-4 p-0 overflow-hidden">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-outline-variant">
-            <h5 class="text-lg font-semibold text-on-surface m-0">@Title</h5>
+        <div class="flex items-center justify-between px-6 py-4 border-b border-outline">
+            <h5 class="text-lg font-semibold text-surface m-0">@Title</h5>
             @if (ShowCloseButton)
             {
-                <button class="text-on-surface-variant hover:text-on-surface bg-transparent border-0 text-xl leading-none cursor-pointer" @onclick="Close">&times;</button>
+                <button class="text-surface hover:text-surface bg-transparent border-0 text-xl leading-none cursor-pointer" @onclick="Close">&times;</button>
             }
         </div>
         <div class="px-6 py-4">
             @BodyContent
         </div>
-        <div class="flex justify-end gap-2 px-6 py-4 border-t border-outline-variant bg-surface-container-lowest">
+        <div class="flex justify-end gap-2 px-6 py-4 border-t border-outline bg-surface">
             @if (FooterContent != null)
             {
                 @FooterContent
             }
             else
             {
-                <button class="px-4 py-2 rounded bg-surface-variant text-on-surface hover:bg-surface-container-high border-0 cursor-pointer" @onclick="Close">Close</button>
+                <button class="px-4 py-2 rounded bg-surface text-surface hover:bg-surface border-0 cursor-pointer" @onclick="Close">Close</button>
             }
         </div>
     </div>

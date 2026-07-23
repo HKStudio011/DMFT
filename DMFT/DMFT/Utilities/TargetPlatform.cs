@@ -34,6 +34,8 @@ namespace DMFT.Utilities
                 return "WebAssembly";
             if (platform.HasFlag(Platform.Web))
                 return "Web";
+            if (platform.HasFlag(Platform.Windows))
+                return "Windows";
             if (platform.HasFlag(Platform.Maui))
                 return "MAUI";
 
