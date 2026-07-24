@@ -58,17 +58,17 @@
                 <label class="block text-sm font-medium text-surface mb-1">Extra yt-dlp Arguments</label>
                 <input type="text" 
                        class="w-full px-3 py-2 border  rounded bg-background text-surface focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
-                       placeholder="--no-mtime --embed-thumbnail"
+                       placeholder="--restrict-filenames --no-warnings --embed-thumbnail --retries 3"
                        @bind="ExtraArgs" />
                 <div class="text-xs text-secondary mt-1">
-                    Common: --restrict-filenames, --no-warnings, --embed-thumbnail, --retries 10
+                    Common: --restrict-filenames, --no-warnings, --embed-thumbnail, --retries 3
                 </div>
             </div>
             <div>
                 <label class="block text-sm font-medium text-surface mb-1">Output Filename Template</label>
                 <input type="text" 
                        class="w-full px-3 py-2 border  rounded bg-background text-surface focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
-                       placeholder="%(title)s [%(id)s].%(ext)s"
+                       placeholder="%(title)s-%(id)s-%(uploader)s.%(ext)s"
                        @bind="OutputTemplate" />
                 <div class="text-xs text-secondary mt-1">
                     Leave empty to use default. Variables: %(title)s, %(id)s, %(uploader)s, %(ext)s
@@ -361,10 +361,10 @@
         ThemeMode = "system";
         MaxConcurrent = 3;
         _delayBetweenMs = 1000;
-        DefaultPath = "";
+        DefaultPath = "%USERPROFILE%\\Music";
         QualityPreset = "best";
-        ExtraArgs = "";
-        OutputTemplate = "";
+        ExtraArgs = "--restrict-filenames --no-warnings --embed-thumbnail --retries 3";
+        OutputTemplate = "%(title)s-%(id)s-%(uploader)s.%(ext)s";
         await ApplyTheme();
         Toast.Show("Settings reset to defaults", ToastLevel.Info);
         StateHasChanged();
