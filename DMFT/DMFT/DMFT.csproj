@@ -91,4 +91,10 @@
     <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3.ios" Version="2.1.12" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="yt-dlp\yt-dlp.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

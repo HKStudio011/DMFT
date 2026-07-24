@@ -172,7 +172,7 @@
     private ReleaseInfo? _updateCheckResult;
     private bool _updateAvailable;
     private bool _checking;
-    private string? _ytDlpVersion;
+    private string? _ytDlpVersion = "checking...";
     private bool _ytDlpUpdating;
     private string? _ytDlpUpdateMessage;
     private bool _ytDlpUpdateError;
@@ -226,6 +226,10 @@
         {
             var parts = version.Split('\n');
             _ytDlpVersion = parts.FirstOrDefault()?.Trim();
+        }
+        else
+        {
+            _ytDlpVersion = null;
         }
     }
 
