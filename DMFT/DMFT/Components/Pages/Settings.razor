@@ -1,4 +1,5 @@
 @page "/settings"
+@using CommunityToolkit.Maui.Storage
 @inject IAppUpdateService UpdateSvc
 @inject IDbContextFactory<AppDbContext> DbFactory
 @rendermode InteractiveRenderSettings.InteractiveServer
@@ -10,46 +11,52 @@
 <div class="space-y-6 max-w-2xl">
 
     @* Theme *@
-    <div class="bg-surface rounded-lg p-5 border border-outline">
+    <div class="bg-background rounded-lg p-5 border">
         <h2 class="text-lg font-semibold text-surface mb-4">Theme</h2>
         <div class="grid grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-medium text-surface mb-1">Mode</label>
-                <select class="w-full px-3 py-2 border border-outline rounded bg-surface text-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                <select class="w-full px-3 py-2 border rounded bg-background text-surface focus:ring-2 focus:ring-primary"
                         @bind="ThemeMode">
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                    <option value="system">System</option>
+                    <option  value="light">Light</option>
+                    <option  value="dark">Dark</option>
+                    <option  value="system">System</option>
                 </select>
             </div>
         </div>
     </div>
 
     @* yt-dlp Configuration *@
-    <div class="bg-surface rounded-lg p-5 border border-outline">
+    <div class="bg-background rounded-lg p-5 border ">
         <h2 class="text-lg font-semibold text-surface mb-4">yt-dlp Configuration</h2>
         <div class="space-y-3">
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-surface mb-1">Max Concurrent Downloads</label>
-                    <input type="number" class="w-full px-3 py-2 border border-outline rounded bg-surface text-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                    <input type="number" class="w-full px-3 py-2 border  rounded bg-background text-surface focus:outline-none focus:ring-2 focus:ring-primary"
                            @bind="MaxConcurrent" min="1" max="10" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-surface mb-1">Delay Between Downloads (ms)</label>
-                    <input type="number" class="w-full px-3 py-2 border border-outline rounded bg-surface text-surface focus:outline-none focus:ring-2 focus:ring-primary"
-                           @bind="DelayBetweenMs" min="0" max="30000" step="100" />
+                    <label class="block text-sm font-medium text-surface mb-1">Delay Between Downloads (s)</label>
+                    <input type="number" class="w-full px-3 py-2 border  rounded bg-background text-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                           @bind="DelayBetweenSeconds" min="0" max="30" step="1" />
                 </div>
             </div>
             <div>
                 <label class="block text-sm font-medium text-surface mb-1">Default Download Path</label>
-                <input type="text" class="w-full px-3 py-2 border border-outline rounded bg-surface text-surface focus:outline-none focus:ring-2 focus:ring-primary"
-                       @bind="DefaultPath" />
+                <div class="relative">
+                    <input type="text" class="w-full pr-18 px-3 py-2 border  rounded bg-background text-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                           @bind="DefaultPath" />
+                    <button @onclick="PickFolder" type="button"
+                            class="absolute right-1 top-1/2 -translate-y-1/2 btn btn-primary !py-1 !px-2 text-xs">
+                        Browse
+                    </button>
+                </div>
             </div>
             <div>
                 <label class="block text-sm font-medium text-surface mb-1">Extra yt-dlp Arguments</label>
                 <input type="text" 
-                       class="w-full px-3 py-2 border border-outline rounded bg-surface text-surface focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
+                       class="w-full px-3 py-2 border  rounded bg-background text-surface focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
                        placeholder="--no-mtime --embed-thumbnail"
                        @bind="ExtraArgs" />
                 <div class="text-xs text-secondary mt-1">
@@ -59,7 +66,7 @@
             <div>
                 <label class="block text-sm font-medium text-surface mb-1">Output Filename Template</label>
                 <input type="text" 
-                       class="w-full px-3 py-2 border border-outline rounded bg-surface text-surface focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
+                       class="w-full px-3 py-2 border  rounded bg-background text-surface focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
                        placeholder="%(title)s [%(id)s].%(ext)s"
                        @bind="OutputTemplate" />
                 <div class="text-xs text-secondary mt-1">
@@ -70,12 +77,12 @@
     </div>
 
     @* Download Quality *@
-    <div class="bg-surface rounded-lg p-5 border border-outline">
+    <div class="bg-background rounded-lg p-5 border ">
         <h2 class="text-lg font-semibold text-surface mb-4">Download Quality</h2>
         <div class="space-y-3">
             <div>
                 <label class="block text-sm font-medium text-surface mb-1">Quality Preset</label>
-                <select class="w-full px-3 py-2 border border-outline rounded bg-surface text-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                <select class="w-full px-3 py-2 border  rounded bg-background text-surface focus:outline-none focus:ring-2 focus:ring-primary"
                         @bind="QualityPreset">
                     @foreach (var kvp in _qualityPresets)
                     {
@@ -87,7 +94,7 @@
     </div>
 
     @* Updates *@
-    <div class="bg-surface rounded-lg p-5 border border-outline">
+    <div class="bg-background rounded-lg p-5 border ">
         <h2 class="text-lg font-semibold text-surface mb-4">Updates</h2>
         @if (_updateCheckResult != null)
         {
@@ -112,9 +119,9 @@
 
     @* Save *@
     <div class="flex gap-3">
-        <button class="btn btn-lg btn-primary"
+        <button class="btn btn-primary"
                 @onclick="SaveSettings">Save Settings</button>
-        <button class="px-6 py-2.5 rounded bg-surface text-surface hover:bg-surface border-0 cursor-pointer font-medium"
+        <button class="btn btn-danger"
                 @onclick="ResetSettings">Reset</button>
     </div>
 
@@ -123,7 +130,8 @@
 @code {
     private string ThemeMode = "system";
     private int MaxConcurrent = 3;
-    private int DelayBetweenMs = 500;
+    private int _delayBetweenMs = 1000;
+    private int DelayBetweenSeconds { get => _delayBetweenMs / 1000; set => _delayBetweenMs = value * 1000; }
     private string DefaultPath = "";
     private string QualityPreset = "best";
     private static readonly Dictionary<string, (string label, string format)> _qualityPresets = new()
@@ -165,7 +173,7 @@
         if (conc != null && int.TryParse(conc.Value, out var c)) MaxConcurrent = c;
 
         var delay = await db.AppSettings.FindAsync("delayBetweenMs");
-        if (delay != null && int.TryParse(delay.Value, out var d)) DelayBetweenMs = d;
+        if (delay != null && int.TryParse(delay.Value, out var d)) _delayBetweenMs = d;
 
         var formatKey = await db.AppSettings.FindAsync("ytdlp_format");
         if (formatKey != null)
@@ -184,6 +192,20 @@
     private async Task ApplyTheme()
     {
         await JS.InvokeVoidAsync("dmftTheme.applyTheme", ThemeMode);
+    }
+
+    private async Task PickFolder()
+    {
+        try
+        {
+            var result = await FolderPicker.Default.PickAsync(CancellationToken.None);
+            if (result.IsSuccessful)
+                DefaultPath = result.Folder.Path;
+        }
+        catch
+        {
+            Toast.Show("Folder picker is not available on this platform", ToastLevel.Error);
+        }
     }
 
     private async Task CheckForUpdates()
@@ -226,7 +248,7 @@
         await SetAppSettingAsync(db, "theme", ThemeMode);
         await SetAppSettingAsync(db, "defaultPath", DefaultPath);
         await SetAppSettingAsync(db, "maxConcurrent", MaxConcurrent.ToString());
-        await SetAppSettingAsync(db, "delayBetweenMs", DelayBetweenMs.ToString());
+        await SetAppSettingAsync(db, "delayBetweenMs", _delayBetweenMs.ToString());
 
         var formatKvp = _qualityPresets[QualityPreset];
         await SetAppSettingAsync(db, "ytdlp_format", formatKvp.format);
@@ -265,12 +287,13 @@
     {
         ThemeMode = "system";
         MaxConcurrent = 3;
-        DelayBetweenMs = 500;
+        _delayBetweenMs = 1000;
         DefaultPath = "";
         QualityPreset = "best";
-        ExtraArgs = "--restrict-filenames --no-warnings";
+        ExtraArgs = "";
         OutputTemplate = "";
         await ApplyTheme();
         Toast.Show("Settings reset to defaults", ToastLevel.Info);
+        StateHasChanged();
     }
 }
