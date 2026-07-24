@@ -2,6 +2,7 @@
 @using CommunityToolkit.Maui.Storage
 @inject IAppUpdateService UpdateSvc
 @inject IDbContextFactory<AppDbContext> DbFactory
+@inject IYtDlpUpdateService YtDlpUpdateSvc
 @rendermode InteractiveRenderSettings.InteractiveServer
 
 <PageTitle>DMFT - Settings</PageTitle>
@@ -73,6 +74,31 @@
                     Leave empty to use default. Variables: %(title)s, %(id)s, %(uploader)s, %(ext)s
                 </div>
             </div>
+            <div class="pt-2 border-t border-border">
+                <div class="flex items-center gap-3 flex-wrap">
+                    <span class="text-sm text-secondary">
+                        yt-dlp version:
+                        @if (_ytDlpVersion != null)
+                        {
+                            <strong>@_ytDlpVersion</strong>
+                        }
+                        else
+                        {
+                            <em class="text-danger">not found</em>
+                        }
+                    </span>
+                    <button class="btn btn-primary text-sm"
+                            @onclick="UpdateYtDlp" disabled="@_ytDlpUpdating">
+                        @(_ytDlpUpdating ? "Updating..." : "Update yt-dlp")
+                    </button>
+                </div>
+                @if (_ytDlpUpdateMessage != null)
+                {
+                    <div class="mt-2 text-sm @(_ytDlpUpdateError ? "text-danger" : "text-success")">
+                        @_ytDlpUpdateMessage
+                    </div>
+                }
+            </div>
         </div>
     </div>
 
@@ -139,18 +165,22 @@
         { "best", ("Best quality", "bestvideo[ext=mp4]+bestaudio/bestvideo[ext=mp4]+bestaudio/best") },
         { "1080p", ("1080p (Full HD)", "bestvideo[height<=1080][ext=mp4]+bestaudio/bestvideo[height<=1080]+bestaudio/best") },
         { "720p", ("720p (HD)", "bestvideo[height<=720][ext=mp4]+bestaudio/bestvideo[height<=720]+bestaudio/best") },
-        { "480p", ("480p (SD)", "bestvideo[height<=480][ext=mp4]+bestaudio/bestvideo[height<=480]+bestaudio/best") },
-        { "audio", ("Audio only", "bestaudio") }
+        { "480p", ("480p (SD)", "bestvideo[height<=480][ext=mp4]+bestaudio/bestvideo[height<=480]+bestaudio/best") }
     };
     private string ExtraArgs = "";
     private string OutputTemplate = "";
     private ReleaseInfo? _updateCheckResult;
     private bool _updateAvailable;
     private bool _checking;
+    private string? _ytDlpVersion;
+    private bool _ytDlpUpdating;
+    private string? _ytDlpUpdateMessage;
+    private bool _ytDlpUpdateError;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadSettings();
+        await LoadYtDlpVersion();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -189,6 +219,16 @@
         if (template != null) OutputTemplate = template.Value;
     }
 
+    private async Task LoadYtDlpVersion()
+    {
+        var version = await YtDlpUpdateSvc.GetCurrentVersionAsync();
+        if (version != null)
+        {
+            var parts = version.Split('\n');
+            _ytDlpVersion = parts.FirstOrDefault()?.Trim();
+        }
+    }
+
     private async Task ApplyTheme()
     {
         await JS.InvokeVoidAsync("dmftTheme.applyTheme", ThemeMode);
@@ -224,6 +264,39 @@
         finally
         {
             _checking = false;
+        }
+    }
+
+    private async Task UpdateYtDlp()
+    {
+        _ytDlpUpdating = true;
+        _ytDlpUpdateMessage = null;
+        try
+        {
+            var newVersion = await YtDlpUpdateSvc.UpdateAsync();
+            if (newVersion != null)
+            {
+                _ytDlpVersion = newVersion;
+                _ytDlpUpdateMessage = $"Updated to {newVersion}";
+                _ytDlpUpdateError = false;
+                Toast.Show($"yt-dlp updated to {newVersion}", ToastLevel.Success);
+            }
+            else
+            {
+                _ytDlpUpdateMessage = "Update failed";
+                _ytDlpUpdateError = true;
+                Toast.Show("yt-dlp update failed", ToastLevel.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _ytDlpUpdateMessage = ex.Message;
+            _ytDlpUpdateError = true;
+            Toast.Show($"yt-dlp update error: {ex.Message}", ToastLevel.Error);
+        }
+        finally
+        {
+            _ytDlpUpdating = false;
         }
     }
 
