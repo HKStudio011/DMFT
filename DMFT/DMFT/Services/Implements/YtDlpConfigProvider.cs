@@ -13,7 +13,7 @@ public class YtDlpConfigProvider : IYtDlpConfigProvider
         ExecutablePath = Path.Combine(ytDlpPath, "yt-dlp.exe");
         if (!File.Exists(ExecutablePath))
         {
-            var baseDirPath = Path.Combine(AppContext.BaseDirectory, "yt-dlp", "yt-dlp.exe");
+            var baseDirPath = Path.Combine(storage.GetAppLocalPath(), "yt-dlp", "yt-dlp.exe");
             ExecutablePath = File.Exists(baseDirPath) ? baseDirPath : "yt-dlp";
         }
 

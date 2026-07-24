@@ -17,4 +17,5 @@ public class StoragePathProvider : IStoragePathProvider
 
     public string GetAppDataPath() => _appDataPath;
     public string GetDatabasePath() => Path.Combine(_appDataPath, "dmft.db");
+    public string GetAppLocalPath() => AppContext.BaseDirectory;
 }
