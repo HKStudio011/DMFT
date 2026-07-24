@@ -17,9 +17,9 @@
 }
 else
 {
-    <div class="overflow-x-auto rounded-lg border border-outline">
+    <div class="overflow-x-auto rounded-lg border ">
         <table class="w-full text-sm bg-surface text-surface">
-            <thead class="bg-surface text-surface border-b border-outline">
+            <thead class="bg-surface text-surface border-b ">
                 <tr>
                     <th class="text-left px-4 py-3">Platform</th>
                     <th class="text-left px-4 py-3">Video ID</th>
@@ -31,7 +31,7 @@ else
             <tbody>
                 @foreach (var item in _items.OrderByDescending(x => x.Time))
                 {
-                    <tr class="border-b border-outline hover:bg-surface">
+                    <tr class="border-b  hover:bg-surface">
                         <td class="px-4 py-3">
                             <span class="px-2 py-0.5 rounded text-xs font-medium text-light bg-primary">@item.Platform</span>
                         </td>

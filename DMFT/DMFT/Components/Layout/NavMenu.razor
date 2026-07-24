@@ -2,7 +2,7 @@
 @using DMFT.Services
 @using DMFT.Utilities
 
-<div class="p-4 border-b border-outline">
+<div class="p-4">
     <a class="text-xl font-bold text-primary no-underline" href="">DMFT</a>
 </div>
 
@@ -24,6 +24,6 @@
     </NavLink>
 </nav>
 
-<div class="p-3 border-t border-outline text-xs text-secondary">
+<div class="p-3 text-xs text-secondary">
     <span>@TargetPlatform.GetFormFactor() - v@(Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "Unknown")</span>
 </div>
