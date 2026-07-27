@@ -37,8 +37,8 @@ public class YtDlpService : IMediaDownloader
         string extra = _config.ExtraArguments;
         string fmt = _config.FormatString;
         string outputArg = !string.IsNullOrWhiteSpace(_config.OutputTemplate)
-            ? _config.OutputTemplate
-            : outputPath;
+            ? Path.Combine(outputPath, _config.OutputTemplate)
+            : outputPath + Path.DirectorySeparatorChar;
         string args = $"--newline --progress-template \"%(progress)j\" -o \"{outputArg}\" -f \"{fmt}\" --merge-output-format mp4 {extra} \"{videoUrl}\"".Trim();
         return RunYtDlpAsync(args);
     }
@@ -47,8 +47,8 @@ public class YtDlpService : IMediaDownloader
     {
         string extra = _config.ExtraArguments;
         string outputArg = !string.IsNullOrWhiteSpace(_config.OutputTemplate)
-            ? _config.OutputTemplate
-            : outputPath;
+            ? Path.Combine(outputPath, _config.OutputTemplate)
+            : outputPath + Path.DirectorySeparatorChar;
         string args = $"--newline --progress-template \"%(progress)j\" -o \"{outputArg}\" -x --audio-format mp3 --audio-quality 0 {extra} \"{videoUrl}\"".Trim();
         return RunYtDlpAsync(args);
     }

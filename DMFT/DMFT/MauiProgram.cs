@@ -92,20 +92,6 @@ public static class MauiProgram
                     context.Database.Migrate();
                 }
 
-                // Data migration: set InHistory for legacy Canceled/Success items
-                using (var migrateCtx = factory.CreateDbContext())
-                {
-                    var legacyHistorical = migrateCtx.DownloadItems
-                        .Where(x => !x.InHistory && (x.Status == 3 || x.Status == 4))
-                        .ToList();
-                    if (legacyHistorical.Count > 0)
-                    {
-                        foreach (var item in legacyHistorical)
-                            item.InHistory = true;
-                        migrateCtx.SaveChanges();
-                    }
-                }
-
                 var settings = scope.ServiceProvider.GetRequiredService<IAppSettingsService>();
                 settings.InitAsync().GetAwaiter().GetResult();
             }

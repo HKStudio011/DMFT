@@ -1,4 +1,4 @@
-namespace DMFT.Services;
+namespace DMFT.Entities;
 
 public static class StatusCodes
 {

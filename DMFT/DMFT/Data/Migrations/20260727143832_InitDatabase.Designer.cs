@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DMFT.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260727132417_AddInHistory")]
-    partial class AddInHistory
+    [Migration("20260727143832_InitDatabase")]
+    partial class InitDatabase
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

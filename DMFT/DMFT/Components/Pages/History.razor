@@ -1,6 +1,5 @@
 @page "/history"
 @inject DownloadService DownloadSvc
-@inject IDownloadQueue Queue
 @inject IDbContextFactory<AppDbContext> DbFactory
 
 @rendermode InteractiveRenderSettings.InteractiveServer
@@ -41,9 +40,9 @@ else
                         </td>
                         <td class="px-4 py-3 text-secondary">@item.Time.ToLocalTime().ToString("g")</td>
                         <td class="px-4 py-3 flex gap-2">
-                            <button class="btn btn-sm btn-primary"
+                            <button class="btn  btn-primary"
                                     @onclick="() => RetryAsync(item)">Retry</button>
-                            <button class="btn btn-sm btn-danger"
+                            <button class="btn  btn-danger"
                                     @onclick="() => DeleteAsync(item)">Delete</button>
                         </td>
                     </tr>
@@ -65,27 +64,30 @@ else
     {
         try
         {
-            item.Id = Guid.NewGuid();
             item.Status = StatusCodes.New;
             item.InHistory = false;
-            item.ProgressPercent = 0;
             item.Time = DateTime.UtcNow;
-            item.CurrentFileName = string.Empty;
-            await DownloadSvc.AddDownloadAsync(item);
-            await Queue.EnqueueDownloadAsync(item);
-            Toast.Show($"Retrying: {item.VideoId}", ToastLevel.Info);
+            await DownloadSvc.UpdateDownloadAsync(item);
+            Toast.Show($"Restored: {item.VideoId}", ToastLevel.Info);
         }
         catch (Exception ex)
         {
             Toast.Show($"Error: {ex.Message}", ToastLevel.Error);
         }
+        await LoadItemsAsync();
+    }
+
+    public async Task LoadItemsAsync()
+    {
+        _items = (await DownloadSvc.GetHistoryAsync()).ToList();
+        StateHasChanged();
     }
 
     private async Task DeleteAsync(DownloadItem item)
     {
         await DownloadSvc.DeleteDownloadAsync(item.Id);
         Toast.Show($"Deleted: {item.VideoId}", ToastLevel.Info);
-        _items = (await DownloadSvc.GetHistoryAsync()).ToList();
+        await LoadItemsAsync();
     }
 
     private static string GetStatusLabel(int status) => status switch

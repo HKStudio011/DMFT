@@ -84,7 +84,6 @@ public class DownloadService
         if (tracked != null)
         {
             tracked.Status = StatusCodes.Canceled;
-            tracked.InHistory = true;
             await db.SaveChangesAsync();
         }
     }
@@ -115,7 +114,10 @@ public class DownloadService
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         var setting = await db.DownloadSettings.FindAsync("default");
-        return setting?.DefaultPath ?? string.Empty;
+        var path = setting?.DefaultPath ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(path))
+            path = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
+        return Environment.ExpandEnvironmentVariables(path);
     }
 
     public async Task SaveDefaultPathAsync(string path)

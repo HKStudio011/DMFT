@@ -40,11 +40,11 @@ else
             <input type="checkbox" class="w-4 h-4 accent-primary" @bind="_setAllOriginAudio" />
             Origin Audio
         </label>
-        <button class="btn btn-outline-primary"
+        <button class="btn btn-outline-success"
                 @onclick="ApplyModeToAll">Apply to All</button>
-        <button class="btn btn-sm btn-primary"
+        <button class="btn  btn-outline-primary"
                 @onclick="DownloadAllAsync">Download All</button>
-        <button class="btn btn-sm btn-outline-danger"
+        <button class="btn  btn-outline-warning"
                 @onclick="ClearAllAsync">Clear All</button>
     </div>
 
@@ -80,32 +80,32 @@ else
                     <div class="w-full h-2 bg-surface rounded-full overflow-hidden">
                         <div class="h-full bg-primary rounded-full transition-all duration-300" style="width: @item.ProgressPercent%"></div>
                     </div>
-                    <span class="text-xs text-secondary">@item.ProgressPercent%</span>
+                    <span class="text-xs text-secondary">@item.ProgressPercent% @item.SpeedFormatted @item.EtaFormatted</span>
                 }
                 <div class="flex gap-2 mt-1">
                     @if (item.Status == StatusCodes.Downloading)
                     {
-                        <button class="btn btn-sm btn-warning"
+                        <button class="btn  btn-outline-danger"
                                 @onclick="() => CancelItemAsync(item)">Cancel</button>
                     }
                     else if (item.Status == StatusCodes.Waiting)
                     {
-                        <button class="btn btn-sm btn-warning"
+                        <button class="btn  btn-outline-danger"
                                 @onclick="() => CancelItemAsync(item)">Cancel</button>
                     }
-                    else if (item.Status >= 99)
+                    else if (item.Status >= 99 || item.Status == StatusCodes.Canceled)
                     {
-                        <button class="btn btn-sm btn-primary"
+                        <button class="btn  btn-outline-primary"
                                 @onclick="() => DownloadAsync(item)">Retry</button>
-                        <button class="btn btn-sm btn-secondary"
+                        <button class="btn  btn-outline-danger"
                                 @onclick="() => RemoveItemAsync(item)">Remove</button>
                     }
                     else if (item.Status == StatusCodes.New)
                     {
-                        <button class="btn btn-sm btn-primary"
+                        <button class="btn  btn-outline-primary"
                                 @onclick="() => DownloadAsync(item)">Download</button>
                     }
-                    <button class="btn btn-sm btn-outline-danger"
+                    <button class="btn  btn-outline-warning"
                             @onclick="() => ClearItemAsync(item)">Clear</button>
                     @if (!string.IsNullOrEmpty(item.CurrentFileName))
                     {
@@ -141,6 +141,7 @@ else
                 StateHasChanged();
             }
         });
+        Queue.OnQueueUpdated += () => InvokeAsync(LoadItems);
         await LoadItems();
     }
 
@@ -157,6 +158,7 @@ else
         if (string.IsNullOrWhiteSpace(content)) return;
         var urls = content.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var parser = new VideoLinkParser();
+        var defaultPath = await DownloadSvc.GetDefaultPathAsync();
         foreach (var url in urls)
         {
             parser.TryParseVideoId(url, out var videoId);
@@ -169,6 +171,7 @@ else
                 Platform = parser.GetPlatform(url).ToString(),
                 Status = StatusCodes.New,
                 DownloadMode = (int)DownloadMode.Video,
+                SaveLocation = defaultPath,
                 ProgressPercent = 0,
                 Time = DateTime.UtcNow
             };

@@ -3,9 +3,11 @@ namespace DMFT.Services;
 public class YtDlpConfigProvider : IYtDlpConfigProvider
 {
     public string ExecutablePath { get; }
-    public string ExtraArguments { get; }
-    public string OutputTemplate { get; }
-    public string FormatString { get; }
+    public string ExtraArguments =>_settings.Get("ytdlp_extra_args") ?? "--restrict-filenames --no-warnings";
+    public string OutputTemplate => _settings.Get("ytdlp_output_template") ?? "";
+    public string FormatString => _settings.Get("ytdlp_format") ?? "bestvideo[ext=mp4]+bestaudio/bestvideo[ext=mp4]+bestaudio/best";
+
+    private readonly IAppSettingsService _settings;
 
     public YtDlpConfigProvider(IStoragePathProvider storage, IAppSettingsService settings)
     {
@@ -17,8 +19,6 @@ public class YtDlpConfigProvider : IYtDlpConfigProvider
             ExecutablePath = File.Exists(baseDirPath) ? baseDirPath : "yt-dlp";
         }
 
-        ExtraArguments = settings.Get("ytdlp_extra_args") ?? "--restrict-filenames --no-warnings";
-        OutputTemplate = settings.Get("ytdlp_output_template") ?? "";
-        FormatString = settings.Get("ytdlp_format") ?? "bestvideo[ext=mp4]+bestaudio/bestvideo[ext=mp4]+bestaudio/best";
+        _settings = settings;
     }
 }

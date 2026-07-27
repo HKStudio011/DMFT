@@ -51,11 +51,11 @@
 }
 
 @utility btn-outline-secondary {
-    @apply border border-secondary text-secondary bg-transparent hover:bg-secondary hover:text-dark;
+    @apply border border-secondary text-secondary bg-transparent hover:bg-secondary hover:text-light;
 }
 
 @utility btn-outline-success {
-    @apply border border-success text-success bg-transparent hover:bg-success hover:text-dark;
+    @apply border border-success text-success bg-transparent hover:bg-success hover:text-light;
 }
 
 @utility btn-outline-danger {
@@ -63,11 +63,11 @@
 }
 
 @utility btn-outline-warning {
-    @apply border border-warning text-warning bg-transparent hover:bg-warning hover:text-dark;
+    @apply border border-warning text-warning bg-transparent hover:bg-warning hover:text-light;
 }
 
 @utility btn-outline-info {
-    @apply border border-info text-info bg-transparent hover:bg-info hover:text-dark;
+    @apply border border-info text-info bg-transparent hover:bg-info hover:text-light;
 }
 
 @utility btn-outline-light {

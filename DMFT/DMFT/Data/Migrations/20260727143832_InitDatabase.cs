@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DMFT.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitDatabase : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -42,10 +42,8 @@ namespace DMFT.Data.Migrations
                     DownloadMode = table.Column<int>(type: "INTEGER", nullable: false),
                     DownloadedBytes = table.Column<long>(type: "INTEGER", nullable: false),
                     TotalBytes = table.Column<long>(type: "INTEGER", nullable: false),
-                    Speed = table.Column<double>(type: "REAL", nullable: false),
-                    EtaSeconds = table.Column<int>(type: "INTEGER", nullable: false),
-                    ProgressPercent = table.Column<int>(type: "INTEGER", nullable: false),
-                    CurrentFileName = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false)
+                    CurrentFileName = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    InHistory = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {

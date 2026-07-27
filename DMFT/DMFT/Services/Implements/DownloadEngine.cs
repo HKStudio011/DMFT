@@ -49,11 +49,12 @@ public class DownloadEngine : IDownloadEngine
 
         var mode = (DownloadMode)item.DownloadMode;
 
+        if (string.IsNullOrWhiteSpace(item.SaveLocation))
+            item.SaveLocation = await _downloadService.GetDefaultPathAsync();
+
         try
         {
-            string videoDest = Path.Combine(item.SaveLocation, $"{item.VideoId}_video.mp4");
-            string audioDest = Path.Combine(item.SaveLocation, $"{item.VideoId}_audio.mp3");
-            string originDest = Path.Combine(item.SaveLocation, $"{item.VideoId}_origin.mp3");
+            string destDir = item.SaveLocation;
 
             if (mode.HasFlag(DownloadMode.OriginAudio))
             {
@@ -68,27 +69,15 @@ public class DownloadEngine : IDownloadEngine
             }
 
             var tasks = new List<Task>();
-            var filenames = new List<string>();
 
             if (mode.HasFlag(DownloadMode.Video))
-            {
-                filenames.Add(Path.GetFileName(videoDest));
-                tasks.Add(_mediaDownloader.DownloadAsync(item.Url, videoDest, noWatermark: true));
-            }
+                tasks.Add(_mediaDownloader.DownloadAsync(item.Url, destDir, noWatermark: true));
 
             if (mode.HasFlag(DownloadMode.Audio))
-            {
-                filenames.Add(Path.GetFileName(audioDest));
-                tasks.Add(_mediaDownloader.DownloadAudioAsync(item.Url, audioDest));
-            }
+                tasks.Add(_mediaDownloader.DownloadAudioAsync(item.Url, destDir));
 
             if (mode.HasFlag(DownloadMode.OriginAudio) && !string.IsNullOrWhiteSpace(item.OriginalSoundUrl))
-            {
-                filenames.Add(Path.GetFileName(originDest));
-                tasks.Add(_mediaDownloader.DownloadAudioAsync(item.OriginalSoundUrl, originDest));
-            }
-
-            item.CurrentFileName = string.Join(", ", filenames);
+                tasks.Add(_mediaDownloader.DownloadAudioAsync(item.OriginalSoundUrl, destDir));
 
             if (tasks.Count == 0)
                 throw new Exception("No download tasks selected");

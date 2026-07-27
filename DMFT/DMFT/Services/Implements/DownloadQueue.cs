@@ -7,8 +7,6 @@ public interface IDownloadQueue
 {
     Task EnqueueDownloadAsync(DownloadItem item);
     bool IsProcessing { get; }
-    int MaxConcurrent { get; set; }
-    int DelayBetweenMs { get; set; }
     event Action? OnQueueUpdated;
 }
 
@@ -16,25 +14,20 @@ public class DownloadQueue : IDownloadQueue
 {
     private readonly IDownloadEngine _engine;
     private readonly DownloadService _downloadService;
+    private readonly IAppSettingsService _settings;
     private readonly ConcurrentQueue<DownloadItem> _queue = new();
-    private int _activeCount;
-    private int _maxConcurrent = 1;
-    private int _delayBetweenMs = 2000;
+    private volatile bool _isProcessing;
 
-    public bool IsProcessing => _activeCount > 0;
-    public int MaxConcurrent { get => _maxConcurrent; set => _maxConcurrent = Math.Max(1, value); }
-    public int DelayBetweenMs { get => _delayBetweenMs; set => _delayBetweenMs = Math.Max(500, value); }
+    private int DelayBetweenMs => Math.Max(500, _settings.GetInt("delayBetweenMs", 2000));
+
+    public bool IsProcessing => _isProcessing;
     public event Action? OnQueueUpdated;
 
     public DownloadQueue(IDownloadEngine engine, DownloadService downloadService, IAppSettingsService settings)
     {
         _engine = engine;
         _downloadService = downloadService;
-
-        var maxConc = settings.GetInt("maxConcurrent", 3);
-        var delay = settings.GetInt("delayBetweenMs", 2000);
-        _maxConcurrent = Math.Max(1, maxConc);
-        _delayBetweenMs = Math.Max(500, delay);
+        _settings = settings;
     }
 
     public async Task EnqueueDownloadAsync(DownloadItem item)
@@ -44,8 +37,9 @@ public class DownloadQueue : IDownloadQueue
         await _downloadService.UpdateDownloadAsync(item);
         _queue.Enqueue(item);
         OnQueueUpdated?.Invoke();
-        if (Interlocked.Increment(ref _activeCount) <= _maxConcurrent)
+        if (!_isProcessing)
         {
+            _isProcessing = true;
             _ = Task.Run(() => ProcessQueueAsync());
         }
     }
@@ -60,13 +54,13 @@ public class DownloadQueue : IDownloadQueue
                 item.Status = StatusCodes.Downloading;
                 OnQueueUpdated?.Invoke();
                 await _engine.StartDownloadAsync(item);
-                await Task.Delay(_delayBetweenMs);
                 OnQueueUpdated?.Invoke();
+                await Task.Delay(DelayBetweenMs);
             }
         }
         finally
         {
-            Interlocked.Decrement(ref _activeCount);
+            _isProcessing = false;
             OnQueueUpdated?.Invoke();
         }
     }

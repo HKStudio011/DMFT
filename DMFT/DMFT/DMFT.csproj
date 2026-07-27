@@ -97,14 +97,14 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Data\Migrations\" />
+  </ItemGroup>
+
   <!-- Build and copy DMFT.Updater.exe on Windows Desktop TFM only -->
-  <Target Name="CopyUpdater" AfterTargets="Build"
-          Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
-    <MSBuild Projects="$(MSBuildThisFileDirectory)..\..\DMFT.Updater\DMFT.Updater.csproj"
-             Targets="Build"
-             Properties="Configuration=$(Configuration);TargetFramework=net10.0" />
-    <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\DMFT.Updater\bin\$(Configuration)\net10.0\DMFT.Updater.exe"
-          DestinationFolder="$(TargetDir)" />
+  <Target Name="CopyUpdater" AfterTargets="Build" Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
+    <MSBuild Projects="$(MSBuildThisFileDirectory)..\..\DMFT.Updater\DMFT.Updater.csproj" Targets="Build" Properties="Configuration=$(Configuration);TargetFramework=net10.0" />
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\DMFT.Updater\bin\$(Configuration)\net10.0\DMFT.Updater.exe" DestinationFolder="$(TargetDir)" />
   </Target>
 
 </Project>
