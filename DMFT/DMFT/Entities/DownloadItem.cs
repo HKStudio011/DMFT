@@ -20,8 +20,11 @@ public class DownloadItem
     public int DownloadMode { get; set; }
     public long DownloadedBytes { get; set; }
     public long TotalBytes { get; set; }
+    [NotMapped]
     public double Speed { get; set; }
+    [NotMapped]
     public int EtaSeconds { get; set; }
+    [NotMapped]
     public int ProgressPercent { get; set; }
     public string CurrentFileName { get; set; } = string.Empty;
 

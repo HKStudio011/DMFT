@@ -1,7 +1,7 @@
 @page "/"
 @inject DownloadService DownloadSvc
+@inject IDownloadEngine Engine
 @inject IDownloadQueue Queue
-@implements IDisposable
 @inject IDbContextFactory<AppDbContext> DbFactory
 @rendermode InteractiveRenderSettings.InteractiveServer
 
@@ -52,25 +52,21 @@ else
                     <span class="px-2 py-0.5 rounded text-xs font-medium text-light bg-primary">@item.Platform</span>
                     <span class="flex-1 text-sm text-surface truncate">@item.Url</span>
                     <span class="text-xs text-surface">@GetStatusLabel(item.Status)</span>
-                    @if (string.IsNullOrEmpty(item.CurrentFileName))
-                    {
-                        <span class="text-xs px-2 py-0.5 rounded bg-danger text-light">Missing</span>
-                    }
                 </div>
                 <div class="flex items-center gap-3 flex-wrap">
                     <span class="text-xs text-surface">Mode:</span>
                     <label class="flex items-center gap-1 text-xs cursor-pointer select-none">
-                        <input type="checkbox" class="w-3.5 h-3.5 accent-primary" @bind="item.DownloadVideo" />
+                        <input type="checkbox" class="w-3.5 h-3.5 accent-primary" @bind="item.DownloadVideo" @bind:after="() => DownloadSvc.UpdateDownloadAsync(item)" />
                         Video
                     </label>
                     <label class="flex items-center gap-1 text-xs cursor-pointer select-none">
-                        <input type="checkbox" class="w-3.5 h-3.5 accent-primary" @bind="item.DownloadAudio" />
+                        <input type="checkbox" class="w-3.5 h-3.5 accent-primary" @bind="item.DownloadAudio" @bind:after="() => DownloadSvc.UpdateDownloadAsync(item)" />
                         Audio
                     </label>
                     @if (item.Platform != "YouTube")
                     {
                         <label class="flex items-center gap-1 text-xs cursor-pointer select-none">
-                            <input type="checkbox" class="w-3.5 h-3.5 accent-primary" @bind="item.DownloadOriginAudio" />
+                            <input type="checkbox" class="w-3.5 h-3.5 accent-primary" @bind="item.DownloadOriginAudio" @bind:after="() => DownloadSvc.UpdateDownloadAsync(item)" />
                             Origin Audio
                         </label>
                     }
@@ -104,18 +100,25 @@ else
     private List<DownloadItem> _items = new();
     private AddModal? addModal;
     private LoadingModal? loadingModal;
-    private Timer? _timer;
     private bool _setAllVideo = true;
     private bool _setAllAudio;
     private bool _setAllOriginAudio;
 
     protected override async Task OnInitializedAsync()
     {
+        Engine.OnItemProgress += item => InvokeAsync(() =>
+        {
+            var existing = _items.FirstOrDefault(x => x.Id == item.Id);
+            if (existing != null)
+            {
+                existing.Speed = item.Speed;
+                existing.EtaSeconds = item.EtaSeconds;
+                existing.ProgressPercent = item.ProgressPercent;
+                StateHasChanged();
+            }
+        });
         await LoadItems();
-        _timer = new Timer(async _ => await InvokeAsync(LoadItems), null, 5000, 5000);
     }
-
-    public void Dispose() => _timer?.Dispose();
 
     private async Task LoadItems()
     {
@@ -151,16 +154,15 @@ else
         Toast.Show($"Added {urls.Length} URL(s)", ToastLevel.Success);
     }
 
-    private void ApplyModeToAll()
+    private async Task ApplyModeToAll()
     {
         int mode = 0;
         if (_setAllVideo) mode |= (int)DownloadMode.Video;
         if (_setAllAudio) mode |= (int)DownloadMode.Audio;
         if (_setAllOriginAudio) mode |= (int)DownloadMode.OriginAudio;
         foreach (var item in _items)
-        {
             item.DownloadMode = mode;
-        }
+        await DownloadSvc.UpdateDownloadAllAsync(_items);
         Toast.Show($"Applied mode to all {_items.Count} item(s)", ToastLevel.Info);
     }
 

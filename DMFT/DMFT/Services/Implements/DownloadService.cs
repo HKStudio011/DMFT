@@ -54,6 +54,14 @@ public class DownloadService
         await db.SaveChangesAsync();
     }
 
+    public async Task UpdateDownloadAllAsync(IEnumerable<DownloadItem> items)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        foreach (var item in items)
+            db.DownloadItems.Update(item);
+        await db.SaveChangesAsync();
+    }
+
     public async Task MoveToHistoryAsync(DownloadItem item)
     {
         using var db = await _dbFactory.CreateDbContextAsync();
@@ -63,9 +71,6 @@ public class DownloadService
             tracked.Status = item.Status;
             tracked.DownloadedBytes = item.DownloadedBytes;
             tracked.TotalBytes = item.TotalBytes;
-            tracked.Speed = item.Speed;
-            tracked.EtaSeconds = item.EtaSeconds;
-            tracked.ProgressPercent = item.ProgressPercent;
             tracked.CurrentFileName = item.CurrentFileName;
             await db.SaveChangesAsync();
         }

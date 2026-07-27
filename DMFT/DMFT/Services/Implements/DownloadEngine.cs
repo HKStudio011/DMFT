@@ -6,6 +6,7 @@ public interface IDownloadEngine
 {
     Task StartDownloadAsync(DownloadItem item);
     Task CancelDownloadAsync(DownloadItem item);
+    event Action<DownloadItem>? OnItemProgress;
 }
 
 public class DownloadEngine : IDownloadEngine
@@ -14,8 +15,7 @@ public class DownloadEngine : IDownloadEngine
     private readonly DownloadService _downloadService;
     private readonly ITikTokSoundExtractor _soundExtractor;
     private DownloadItem? _currentItem;
-    private Timer? _progressTimer;
-    private const int ProgressRefreshMs = 500;
+    public event Action<DownloadItem>? OnItemProgress;
 
     public DownloadEngine(IMediaDownloader mediaDownloader, DownloadService downloadService, ITikTokSoundExtractor soundExtractor)
     {
@@ -28,12 +28,11 @@ public class DownloadEngine : IDownloadEngine
     private void HandleProgress(DownloadProgress progress)
     {
         if (_currentItem == null) return;
-        _currentItem.DownloadedBytes = progress.DownloadedBytes;
-        _currentItem.TotalBytes = progress.TotalBytes;
         _currentItem.Speed = progress.Speed;
         _currentItem.EtaSeconds = progress.EtaSeconds;
         if (progress.TotalBytes > 0)
             _currentItem.ProgressPercent = (int)((progress.DownloadedBytes * 100) / progress.TotalBytes);
+        OnItemProgress?.Invoke(_currentItem);
     }
 
     public async Task StartDownloadAsync(DownloadItem item)
@@ -49,11 +48,6 @@ public class DownloadEngine : IDownloadEngine
         await _downloadService.UpdateDownloadAsync(item);
 
         var mode = (DownloadMode)item.DownloadMode;
-
-        _progressTimer = new Timer(async _ =>
-        {
-            await _downloadService.UpdateDownloadAsync(item);
-        }, null, ProgressRefreshMs, ProgressRefreshMs);
 
         try
         {
@@ -102,8 +96,6 @@ public class DownloadEngine : IDownloadEngine
             await Task.WhenAll(tasks);
 
             item.Status = StatusCodes.Success;
-            _progressTimer?.Dispose();
-            _progressTimer = null;
             await _downloadService.MoveToHistoryAsync(item);
         }
         catch (Exception)
@@ -118,16 +110,12 @@ public class DownloadEngine : IDownloadEngine
                 item.Status = StatusCodes.AudioOriginError;
             else
                 item.Status = StatusCodes.Error;
-            _progressTimer?.Dispose();
-            _progressTimer = null;
             await _downloadService.UpdateDownloadAsync(item);
         }
     }
 
     public async Task CancelDownloadAsync(DownloadItem item)
     {
-        _progressTimer?.Dispose();
-        _progressTimer = null;
         await _mediaDownloader.CancelAsync();
     }
 }
