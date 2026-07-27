@@ -88,6 +88,11 @@ else
                         <button class="btn btn-sm btn-warning"
                                 @onclick="() => CancelItemAsync(item)">Cancel</button>
                     }
+                    else if (item.Status == StatusCodes.Waiting)
+                    {
+                        <button class="btn btn-sm btn-warning"
+                                @onclick="() => CancelItemAsync(item)">Cancel</button>
+                    }
                     else if (item.Status >= 99)
                     {
                         <button class="btn btn-sm btn-primary"

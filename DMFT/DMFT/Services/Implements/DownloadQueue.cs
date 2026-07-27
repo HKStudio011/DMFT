@@ -41,6 +41,7 @@ public class DownloadQueue : IDownloadQueue
     {
         if (item == null) return;
         item.Status = StatusCodes.Waiting;
+        await _downloadService.UpdateDownloadAsync(item);
         _queue.Enqueue(item);
         OnQueueUpdated?.Invoke();
         if (Interlocked.Increment(ref _activeCount) <= _maxConcurrent)
