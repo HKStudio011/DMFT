@@ -19,7 +19,7 @@ public class DownloadService
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.DownloadItems
-            .Where(x => x.Status < 4)
+            .Where(x => !x.InHistory)
             .OrderBy(x => x.Time)
             .ToListAsync();
     }
@@ -28,7 +28,7 @@ public class DownloadService
     {
         using var db = await _dbFactory.CreateDbContextAsync();
         return await db.DownloadItems
-            .Where(x => x.Status == 4 || x.Status == 3 || x.Status >= 99)
+            .Where(x => x.InHistory)
             .OrderByDescending(x => x.Time)
             .ToListAsync();
     }
@@ -72,6 +72,19 @@ public class DownloadService
             tracked.DownloadedBytes = item.DownloadedBytes;
             tracked.TotalBytes = item.TotalBytes;
             tracked.CurrentFileName = item.CurrentFileName;
+            tracked.InHistory = true;
+            await db.SaveChangesAsync();
+        }
+    }
+
+    public async Task CancelDownloadAsync(DownloadItem item)
+    {
+        using var db = await _dbFactory.CreateDbContextAsync();
+        var tracked = await db.DownloadItems.FindAsync(item.Id);
+        if (tracked != null)
+        {
+            tracked.Status = StatusCodes.Canceled;
+            tracked.InHistory = true;
             await db.SaveChangesAsync();
         }
     }
