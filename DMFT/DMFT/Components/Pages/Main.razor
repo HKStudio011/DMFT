@@ -42,6 +42,10 @@ else
         </label>
         <button class="btn btn-outline-primary"
                 @onclick="ApplyModeToAll">Apply to All</button>
+        <button class="btn btn-sm btn-primary"
+                @onclick="DownloadAllAsync">Download All</button>
+        <button class="btn btn-sm btn-outline-danger"
+                @onclick="ClearAllAsync">Clear All</button>
     </div>
 
     <div class="space-y-3">
@@ -79,10 +83,25 @@ else
                     <span class="text-xs text-secondary">@item.ProgressPercent%</span>
                 }
                 <div class="flex gap-2 mt-1">
-                    <button class="btn btn-sm btn-primary"
-                            @onclick="() => DownloadAsync(item)">Download</button>
-                    <button class="btn btn-sm btn-danger"
-                            @onclick="() => RemoveItem(item)">Remove</button>
+                    @if (item.Status == StatusCodes.Downloading)
+                    {
+                        <button class="btn btn-sm btn-warning"
+                                @onclick="() => CancelItemAsync(item)">Cancel</button>
+                    }
+                    else if (item.Status >= 99)
+                    {
+                        <button class="btn btn-sm btn-primary"
+                                @onclick="() => DownloadAsync(item)">Retry</button>
+                        <button class="btn btn-sm btn-secondary"
+                                @onclick="() => RemoveItemAsync(item)">Remove</button>
+                    }
+                    else if (item.Status == StatusCodes.New)
+                    {
+                        <button class="btn btn-sm btn-primary"
+                                @onclick="() => DownloadAsync(item)">Download</button>
+                    }
+                    <button class="btn btn-sm btn-outline-danger"
+                            @onclick="() => ClearItemAsync(item)">Clear</button>
                     @if (!string.IsNullOrEmpty(item.CurrentFileName))
                     {
                         <span class="px-3 py-1.5 rounded text-xs bg-primary-container text-primary">@item.CurrentFileName</span>
@@ -185,10 +204,46 @@ else
         }
     }
 
-    private async Task RemoveItem(DownloadItem item)
+    private async Task DownloadAllAsync()
+    {
+        var newItems = _items.Where(x => x.Status == StatusCodes.New).ToList();
+        if (newItems.Count == 0)
+        {
+            Toast.Show("No new items to download", ToastLevel.Info);
+            return;
+        }
+        foreach (var item in newItems)
+            await Queue.EnqueueDownloadAsync(item);
+        Toast.Show($"Added {newItems.Count} item(s) to queue", ToastLevel.Success);
+        await LoadItems();
+    }
+
+    private async Task ClearAllAsync()
+    {
+        await DownloadSvc.ClearDownloadsAsync(x => x.Status == StatusCodes.New && !x.InHistory);
+        Toast.Show("Cleared all new items", ToastLevel.Info);
+        await LoadItems();
+    }
+
+    private async Task CancelItemAsync(DownloadItem item)
+    {
+        await Engine.CancelDownloadAsync(item);
+        await DownloadSvc.CancelDownloadAsync(item);
+        Toast.Show($"Canceled: {item.VideoId}", ToastLevel.Info);
+        await LoadItems();
+    }
+
+    private async Task RemoveItemAsync(DownloadItem item)
+    {
+        await DownloadSvc.MoveToHistoryAsync(item);
+        Toast.Show($"Moved to history: {item.VideoId}", ToastLevel.Info);
+        await LoadItems();
+    }
+
+    private async Task ClearItemAsync(DownloadItem item)
     {
         await DownloadSvc.DeleteDownloadAsync(item.Id);
-        Toast.Show($"Removed: {item.VideoId}", ToastLevel.Info);
+        Toast.Show($"Cleared: {item.VideoId}", ToastLevel.Info);
         await LoadItems();
     }
 
