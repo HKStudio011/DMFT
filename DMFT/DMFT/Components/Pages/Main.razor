@@ -40,14 +40,14 @@ else
             <input type="checkbox" class="w-4 h-4 accent-primary" @bind="_setAllOriginAudio" />
             Origin Audio
         </label>
-        <button class="px-3 py-1 rounded text-xs bg-primary-container text-primary hover:brightness-110 border-0 cursor-pointer"
+        <button class="btn btn-outline-primary"
                 @onclick="ApplyModeToAll">Apply to All</button>
     </div>
 
     <div class="space-y-3">
         @foreach (var item in _items.OrderByDescending(x => x.Time))
         {
-            <div class="bg-surface rounded-lg p-4 flex flex-col gap-2 border ">
+            <div class="bg-background rounded-lg p-4 flex flex-col gap-2 border ">
                 <div class="flex items-center gap-3">
                     <span class="px-2 py-0.5 rounded text-xs font-medium text-light bg-primary">@item.Platform</span>
                     <span class="flex-1 text-sm text-surface truncate">@item.Url</span>

@@ -68,8 +68,7 @@ public static class MauiProgram
         // App update
         builder.Services.AddSingleton<IAppUpdateService>(sp =>
         {
-            var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-            http.DefaultRequestHeaders.UserAgent.ParseAdd("DMFT/2.0");
+            var http = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
             return new AppUpdateService(http);
         });
 

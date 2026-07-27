@@ -119,28 +119,50 @@
         </div>
     </div>
 
-    @* Updates *@
+    @* App Updates *@
     <div class="bg-background rounded-lg p-5 border ">
-        <h2 class="text-lg font-semibold text-surface mb-4">Updates</h2>
-        @if (_updateCheckResult != null)
-        {
-            <div class="mb-3">
-                @if (_updateAvailable)
-                {
-                    <div class="text-primary font-medium mb-2">Update available: @_updateCheckResult.TagName</div>
-                }
-                else
-                {
-                    <div class="text-secondary mb-2">You are on the latest version.</div>
-                }
-            </div>
-        }
-        <div class="flex gap-2">
-            <button class="btn btn-primary"
-                    @onclick="CheckForUpdates" disabled="@_checking">
-                @(_checking ? "Checking..." : "Check for Updates")
-            </button>
+        <h2 class="text-lg font-semibold text-surface mb-4">App Updates</h2>
+        <div class="text-sm text-secondary mb-2">
+            Current version: <strong>@UpdateSvc.CurrentVersion</strong>
         </div>
+
+        @switch (_updateState)
+        {
+            case UpdateState.Idle:
+                <button class="btn btn-primary" @onclick="CheckForUpdates">Check for Updates</button>
+                break;
+            case UpdateState.Checking:
+                <button class="btn btn-primary" disabled>Checking...</button>
+                break;
+            case UpdateState.Available:
+                <div class="text-primary font-medium mb-2">Update available: @(_updateCheckResult?.TagName)</div>
+                <button class="btn btn-primary" @onclick="DownloadUpdate">Download @(_updateCheckResult?.TagName)</button>
+                break;
+            case UpdateState.Downloading:
+                <div class="mb-2">
+                    <div class="w-full bg-gray-700 rounded h-2">
+                        <div class="bg-primary h-2 rounded transition-all" style="width: @(_downloadProgress)%"></div>
+                    </div>
+                    <span class="text-xs text-secondary">@_downloadProgress%</span>
+                </div>
+                <button class="btn btn-primary" disabled>Downloading...</button>
+                break;
+            case UpdateState.Downloaded:
+                <div class="text-success font-medium mb-2">Download complete. Ready to install.</div>
+                <button class="btn btn-danger" @onclick="InstallUpdate">Install &amp; Restart</button>
+                break;
+            case UpdateState.Installing:
+                <button class="btn btn-danger" disabled>Installing...</button>
+                break;
+            case UpdateState.UpToDate:
+                <div class="text-secondary mb-2">You're on the latest version.</div>
+                <button class="btn btn-primary" @onclick="CheckForUpdates">Check Again</button>
+                break;
+            case UpdateState.Error:
+                <div class="text-danger mb-2">@_updateErrorMessage</div>
+                <button class="btn btn-primary" @onclick="CheckForUpdates">Retry</button>
+                break;
+        }
     </div>
 
     @* Save *@
@@ -169,9 +191,11 @@
     };
     private string ExtraArgs = "";
     private string OutputTemplate = "";
+    private enum UpdateState { Idle, Checking, Available, Downloading, Downloaded, Installing, UpToDate, Error }
+    private UpdateState _updateState;
     private ReleaseInfo? _updateCheckResult;
-    private bool _updateAvailable;
-    private bool _checking;
+    private int _downloadProgress;
+    private string _updateErrorMessage = "";
     private string? _ytDlpVersion = "checking...";
     private bool _ytDlpUpdating;
     private string? _ytDlpUpdateMessage;
@@ -254,20 +278,81 @@
 
     private async Task CheckForUpdates()
     {
-        _checking = true;
+        _updateState = UpdateState.Checking;
         try
         {
-            var release = await UpdateSvc.CheckForUpdatesAsync("2.0.0");
+            var release = await UpdateSvc.CheckForUpdatesAsync();
             _updateCheckResult = release;
-            _updateAvailable = release != null && UpdateSvc.IsUpdateAvailable(release, "2.0.0");
+            if (release == null || !UpdateSvc.IsUpdateAvailable(release))
+            {
+                _updateState = UpdateState.UpToDate;
+            }
+            else
+            {
+                _updateState = UpdateState.Available;
+            }
         }
-        catch
+        catch (Exception ex)
         {
+            _updateErrorMessage = ex.Message;
+            _updateState = UpdateState.Error;
             Toast.Show("Failed to check for updates", ToastLevel.Error);
         }
-        finally
+    }
+
+    private async Task DownloadUpdate()
+    {
+        if (_updateCheckResult == null) return;
+        _updateState = UpdateState.Downloading;
+        _downloadProgress = 0;
+        try
         {
-            _checking = false;
+            var progress = new Progress<int>(pct =>
+            {
+                _downloadProgress = pct;
+                InvokeAsync(StateHasChanged);
+            });
+            var path = await UpdateSvc.DownloadUpdateAsync(_updateCheckResult, progress);
+            if (path != null)
+                _updateState = UpdateState.Downloaded;
+            else
+            {
+                _updateErrorMessage = "No suitable asset found for download";
+                _updateState = UpdateState.Error;
+                Toast.Show("Download failed: no asset found", ToastLevel.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _updateErrorMessage = ex.Message;
+            _updateState = UpdateState.Error;
+            Toast.Show($"Download failed: {ex.Message}", ToastLevel.Error);
+        }
+    }
+
+    private async Task InstallUpdate()
+    {
+        _updateState = UpdateState.Installing;
+        try
+        {
+            var launched = await UpdateSvc.InstallUpdateAsync();
+            if (launched)
+            {
+                await Task.Delay(500);
+                Application.Current?.Quit();
+            }
+            else
+            {
+                _updateErrorMessage = "Failed to launch updater";
+                _updateState = UpdateState.Error;
+                Toast.Show("Failed to launch updater", ToastLevel.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _updateErrorMessage = ex.Message;
+            _updateState = UpdateState.Error;
+            Toast.Show($"Install failed: {ex.Message}", ToastLevel.Error);
         }
     }
 

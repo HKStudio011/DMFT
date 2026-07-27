@@ -39,8 +39,8 @@
     <ApplicationDisplayVersion>2.0</ApplicationDisplayVersion>
     <ApplicationVersion>2</ApplicationVersion>
 
-    <Version>1.0.0</Version>
     <PackageVersion>1.0.0</PackageVersion>
+
 
     <!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
     <WindowsPackageType>None</WindowsPackageType>
@@ -96,5 +96,15 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <!-- Build and copy DMFT.Updater.exe on Windows Desktop TFM only -->
+  <Target Name="CopyUpdater" AfterTargets="Build"
+          Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
+    <MSBuild Projects="$(MSBuildThisFileDirectory)..\..\DMFT.Updater\DMFT.Updater.csproj"
+             Targets="Build"
+             Properties="Configuration=$(Configuration);TargetFramework=net10.0" />
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\DMFT.Updater\bin\$(Configuration)\net10.0\DMFT.Updater.exe"
+          DestinationFolder="$(TargetDir)" />
+  </Target>
 
 </Project>

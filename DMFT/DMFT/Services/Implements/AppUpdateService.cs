@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using System.IO.Compression;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -17,27 +20,37 @@ public record ReleaseAsset(
 
 public interface IAppUpdateService
 {
-    Task<ReleaseInfo?> CheckForUpdatesAsync(string currentVersion);
-    Task<string?> DownloadReleaseAsync(ReleaseInfo release, string destDir);
-    bool IsUpdateAvailable(ReleaseInfo release, string currentVersion);
+    string CurrentVersion { get; }
+    Task<ReleaseInfo?> CheckForUpdatesAsync();
+    bool IsUpdateAvailable(ReleaseInfo release);
+    Task<string?> DownloadUpdateAsync(ReleaseInfo release, IProgress<int>? progress);
+    string? DownloadedZipPath { get; }
+    Task<bool> InstallUpdateAsync();
 }
 
 public class AppUpdateService : IAppUpdateService
 {
     private readonly HttpClient _http;
+    private const string RepoOwner = "HKStudio011";
+    private const string RepoName = "DMFT";
+
+    public string CurrentVersion { get; }
+    public string? DownloadedZipPath { get; private set; }
 
     public AppUpdateService(HttpClient http)
     {
         _http = http;
+
+        CurrentVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "0.0.0";
     }
 
-    public async Task<ReleaseInfo?> CheckForUpdatesAsync(string currentVersion)
+    public async Task<ReleaseInfo?> CheckForUpdatesAsync()
     {
         try
         {
             var request = new HttpRequestMessage(HttpMethod.Get,
-                "https://api.github.com/repos/owner/dmft/releases/latest");
-            request.Headers.UserAgent.ParseAdd("DMFT/2.0");
+                $"https://api.github.com/repos/{RepoOwner}/{RepoName}/releases/latest");
+            request.Headers.UserAgent.ParseAdd("DMFT/" + CurrentVersion);
 
             var response = await _http.SendAsync(request,
                 HttpCompletionOption.ResponseHeadersRead);
@@ -50,10 +63,10 @@ public class AppUpdateService : IAppUpdateService
         catch { return null; }
     }
 
-    public bool IsUpdateAvailable(ReleaseInfo release, string currentVersion)
+    public bool IsUpdateAvailable(ReleaseInfo release)
     {
         var tag = release.TagName.TrimStart('v');
-        return CompareSemanticVersions(tag, currentVersion) > 0;
+        return CompareSemanticVersions(tag, CurrentVersion) > 0;
     }
 
     private static int CompareSemanticVersions(string v1, string v2)
@@ -71,33 +84,93 @@ public class AppUpdateService : IAppUpdateService
         return 0;
     }
 
-    public async Task<string?> DownloadReleaseAsync(ReleaseInfo release, string destDir)
+    public async Task<string?> DownloadUpdateAsync(ReleaseInfo release, IProgress<int>? progress)
     {
         try
         {
             var asset = release.Assets.FirstOrDefault(a =>
                 a.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
-                a.Name.Contains("win", StringComparison.OrdinalIgnoreCase));
+                !a.Name.Contains("symbols", StringComparison.OrdinalIgnoreCase));
 
             if (asset == null) return null;
 
-            Directory.CreateDirectory(destDir);
+            var tempDir = Path.Combine(Path.GetTempPath(), "DMFT_Update");
+            Directory.CreateDirectory(tempDir);
+
+            var zipPath = Path.Combine(tempDir, asset.Name);
 
             var request = new HttpRequestMessage(HttpMethod.Get, asset.BrowserDownloadUrl);
-            request.Headers.UserAgent.ParseAdd("DMFT/2.0");
+            request.Headers.UserAgent.ParseAdd("DMFT/" + CurrentVersion);
 
-            var response = await _http.SendAsync(request,
-                HttpCompletionOption.ResponseHeadersRead);
-
+            using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
             if (!response.IsSuccessStatusCode) return null;
 
-            var zipPath = Path.Combine(destDir, asset.Name);
-            using var fs = new FileStream(zipPath, FileMode.Create,
-                FileAccess.Write, FileShare.None);
-            await response.Content.CopyToAsync(fs);
+            var totalBytes = response.Content.Headers.ContentLength ?? -1;
+            using var contentStream = await response.Content.ReadAsStreamAsync();
+            using var fileStream = new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.None);
 
+            var buffer = new byte[81920];
+            long readBytes = 0;
+            int bytesRead;
+            var lastReported = 0;
+
+            while ((bytesRead = await contentStream.ReadAsync(buffer)) > 0)
+            {
+                await fileStream.WriteAsync(buffer, 0, bytesRead);
+                readBytes += bytesRead;
+
+                if (totalBytes > 0 && progress != null)
+                {
+                    var pct = (int)(readBytes * 100 / totalBytes);
+                    if (pct > lastReported)
+                    {
+                        lastReported = pct;
+                        progress.Report(pct);
+                    }
+                }
+            }
+
+            DownloadedZipPath = zipPath;
             return zipPath;
         }
         catch { return null; }
+    }
+
+    public Task<bool> InstallUpdateAsync()
+    {
+        if (DownloadedZipPath == null || !File.Exists(DownloadedZipPath))
+            return Task.FromResult(false);
+
+        try
+        {
+            var appDir = AppContext.BaseDirectory;
+            var updaterPath = FindUpdaterPath(appDir);
+            if (updaterPath == null) return Task.FromResult(false);
+
+            var currentPid = Environment.ProcessId;
+
+            var psi = new ProcessStartInfo
+            {
+                FileName = updaterPath,
+                Arguments = $"--zip \"{DownloadedZipPath}\" --pid {currentPid} --app-dir \"{appDir}\"",
+                UseShellExecute = true,
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden
+            };
+
+            Process.Start(psi);
+            return Task.FromResult(true);
+        }
+        catch { return Task.FromResult(false); }
+    }
+
+    private static string? FindUpdaterPath(string appDir)
+    {
+        var candidates = new[]
+        {
+            Path.Combine(appDir, "DMFT.Updater.exe"),
+        };
+
+        return candidates.FirstOrDefault(File.Exists);
     }
 }
