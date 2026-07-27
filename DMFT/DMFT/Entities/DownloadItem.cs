@@ -27,6 +27,7 @@ public class DownloadItem
     [NotMapped]
     public int ProgressPercent { get; set; }
     public string CurrentFileName { get; set; } = string.Empty;
+    public bool InHistory { get; set; }
 
     [NotMapped]
     public bool DownloadVideo
