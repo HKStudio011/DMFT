@@ -67,6 +67,7 @@ else
         {
             item.Id = Guid.NewGuid();
             item.Status = StatusCodes.New;
+            item.InHistory = false;
             item.ProgressPercent = 0;
             item.Time = DateTime.UtcNow;
             item.CurrentFileName = string.Empty;
