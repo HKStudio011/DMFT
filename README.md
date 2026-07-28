@@ -4,8 +4,6 @@
 
 # DMFT — Download Manager For TikTok & YouTube
 
-> **⚠️ Lưu ý**: Tài liệu dự án chi tiết nằm trong thư mục [docs/](docs/README.md).
-
 ## 📖 Giới thiệu
 
 **DMFT** (v2) là ứng dụng đa nền tảng **MAUI Blazor Hybrid** cho phép quản lý và tải video từ **TikTok**, **YouTube**, **YouTube Shorts** thông qua công cụ **yt-dlp**.
@@ -43,7 +41,7 @@
 
 ## 🚀 Build (yêu cầu .NET 10.0 SDK + MAUI workload + Node.js 20+)
 
-### ### Restore & build
+### Restore & build
 
 ```bash
 dotnet restore DMFT.slnx
@@ -60,7 +58,7 @@ npm install && npm run build
 ### Chạy ứng dụng
 
 ```bash
-dotnet run --project DMFT/DMDT -c Release
+dotnet run --project DMFT/DMFT -c Release
 ```
 
 ## 🖱️ Hướng dẫn sử dụng

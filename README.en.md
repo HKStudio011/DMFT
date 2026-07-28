@@ -40,11 +40,6 @@ It features a modern web-based UI (Tailwind CSS v4), download queue, history man
 ## ⚙️ System Requirements
 
 - .NET **10.0 Runtime**
-- **yt-dlp** — auto-resolved: AppData → `./yt-dlp/` → PATH
-- **Playwright browsers** (for Origin Audio):
-  ```bash
-  pwsh bin/Debug/net10.0/playwright.ps1 install chromium
-  ```
 
 ## 🚀 Setup & Run
 
@@ -65,7 +60,7 @@ npm install && npm run build
 ### Run
 
 ```bash
-dotnet run --project DMFT/DMDT -c Release
+dotnet run --project DMFT/DMFT -c Release
 ```
 
 ## 🖱️ Usage Guide
