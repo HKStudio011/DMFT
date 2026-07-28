@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="DMFT.Updater/DMFT.Updater.csproj" Id="29837435-2da4-493e-abf2-f2bdd4e2f4de" />
   <Project Path="DMFT.Test.App/DMFT.Test.App.csproj" Id="e67dd6a3-38e3-4704-9bae-3f646ad9b862" />
   <Project Path="DMFT/DMFT/DMFT.csproj" Id="176c4269-eee0-4ca9-8dcf-edeb61e3b56f">
     <Deploy Solution="Release|*" />
