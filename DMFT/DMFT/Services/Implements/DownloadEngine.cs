@@ -148,6 +148,7 @@ public class DownloadEngine : IDownloadEngine
 
     public async Task CancelDownloadAsync(DownloadItem item)
     {
+        await _soundExtractor.CancelAsync();
         await _mediaDownloader.CancelAsync();
     }
 
