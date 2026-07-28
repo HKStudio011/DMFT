@@ -8,7 +8,6 @@ on:
 env:
   DOTNET_VERSION: '10.0.x'
   PROJECT_PATH: DMFT/DMFT/DMFT.csproj
-  UPDATER_PATH: DMFT.Updater/DMFT.Updater.csproj
   OUTPUT_DIR: publish
 
 jobs:
@@ -34,13 +33,6 @@ jobs:
             -f net10.0-windows10.0.19041.0 `
             -c Release `
             --self-contained `
-            -o ${{ env.OUTPUT_DIR }}
-
-      - name: Publish Updater
-        run: |
-          dotnet publish ${{ env.UPDATER_PATH }} `
-            -f net10.0 `
-            -c Release `
             -o ${{ env.OUTPUT_DIR }}
 
       - name: Sign binaries (optional)
