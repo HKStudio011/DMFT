@@ -1,0 +1,448 @@
+@page "/settings"
+@using CommunityToolkit.Maui.Storage
+@inject IAppUpdateService UpdateSvc
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject IYtDlpUpdateService YtDlpUpdateSvc
+@rendermode InteractiveRenderSettings.InteractiveServer
+
+<PageTitle>DMFT - Settings</PageTitle>
+
+<h1 class="text-2xl font-bold text-surface mb-6">Settings</h1>
+
+<div class="space-y-6 max-w-2xl">
+
+    @* Theme *@
+    <div class="bg-background rounded-lg p-5 border">
+        <h2 class="text-lg font-semibold text-surface mb-4">Theme</h2>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-surface mb-1">Mode</label>
+                <select class="w-full px-3 py-2 border rounded bg-background text-surface focus:ring-2 focus:ring-primary"
+                        @bind="ThemeMode">
+                    <option  value="light">Light</option>
+                    <option  value="dark">Dark</option>
+                    <option  value="system">System</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    @* yt-dlp Configuration *@
+    <div class="bg-background rounded-lg p-5 border ">
+        <h2 class="text-lg font-semibold text-surface mb-4">yt-dlp Configuration</h2>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-sm font-medium text-surface mb-1">Delay Between Downloads (s)</label>
+                <input type="number" class="w-full px-3 py-2 border  rounded bg-background text-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                       @bind="DelayBetweenSeconds" min="0" max="30" step="1" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-surface mb-1">Default Download Path</label>
+                <div class="relative">
+                    <input type="text" class="w-full pr-18 px-3 py-2 border  rounded bg-background text-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                           @bind="DefaultPath" />
+                    <button @onclick="PickFolder" type="button"
+                            class="absolute right-1 top-1/2 -translate-y-1/2 btn btn-primary !py-1 !px-2 text-xs">
+                        Browse
+                    </button>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-surface mb-1">Extra yt-dlp Arguments</label>
+                <input type="text" 
+                       class="w-full px-3 py-2 border  rounded bg-background text-surface focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
+                       placeholder="--restrict-filenames --no-warnings --embed-thumbnail --retries 3"
+                       @bind="ExtraArgs" />
+                <div class="text-xs text-secondary mt-1">
+                    Common: --restrict-filenames, --no-warnings, --embed-thumbnail, --retries 3
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-surface mb-1">Output Filename Template</label>
+                <input type="text" 
+                       class="w-full px-3 py-2 border  rounded bg-background text-surface focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
+                       placeholder="%(title)s-%(id)s-%(uploader)s.%(ext)s"
+                       @bind="OutputTemplate" />
+                <div class="text-xs text-secondary mt-1">
+                    Leave empty to use default. Variables: %(title)s, %(id)s, %(uploader)s, %(ext)s
+                </div>
+            </div>
+            <div class="pt-2 border-t border-border">
+                <div class="flex items-center gap-3 flex-wrap">
+                    <span class="text-sm text-secondary">
+                        yt-dlp version:
+                        @if (_ytDlpVersion != null)
+                        {
+                            <strong>@_ytDlpVersion</strong>
+                        }
+                        else
+                        {
+                            <em class="text-danger">not found</em>
+                        }
+                    </span>
+                    <button class="btn btn-primary text-sm"
+                            @onclick="UpdateYtDlp" disabled="@_ytDlpUpdating">
+                        @(_ytDlpUpdating ? "Updating..." : "Update yt-dlp")
+                    </button>
+                </div>
+                @if (_ytDlpUpdateMessage != null)
+                {
+                    <div class="mt-2 text-sm @(_ytDlpUpdateError ? "text-danger" : "text-success")">
+                        @_ytDlpUpdateMessage
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* Download Quality *@
+    <div class="bg-background rounded-lg p-5 border ">
+        <h2 class="text-lg font-semibold text-surface mb-4">Download Quality</h2>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-sm font-medium text-surface mb-1">Quality Preset</label>
+                <select class="w-full px-3 py-2 border  rounded bg-background text-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                        @bind="QualityPreset">
+                    @foreach (var kvp in _qualityPresets)
+                    {
+                        <option value="@kvp.Key">@kvp.Value.label</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+
+    @* App Updates *@
+    <div class="bg-background rounded-lg p-5 border ">
+        <h2 class="text-lg font-semibold text-surface mb-4">App Updates</h2>
+        <div class="text-sm text-secondary mb-2">
+            Current version: <strong>@UpdateSvc.CurrentVersion</strong>
+        </div>
+
+        @switch (_updateState)
+        {
+            case UpdateState.Idle:
+                <button class="btn btn-primary" @onclick="CheckForUpdates">Check for Updates</button>
+                break;
+            case UpdateState.Checking:
+                <button class="btn btn-primary" disabled>Checking...</button>
+                break;
+            case UpdateState.Available:
+                <div class="text-primary font-medium mb-2">Update available: @(_updateCheckResult?.TagName)</div>
+                <button class="btn btn-primary" @onclick="DownloadUpdate">Download @(_updateCheckResult?.TagName)</button>
+                break;
+            case UpdateState.Downloading:
+                <div class="mb-2">
+                    <div class="w-full bg-gray-700 rounded h-2">
+                        <div class="bg-primary h-2 rounded transition-all" style="width: @(_downloadProgress)%"></div>
+                    </div>
+                    <span class="text-xs text-secondary">@_downloadProgress%</span>
+                </div>
+                <button class="btn btn-primary" disabled>Downloading...</button>
+                break;
+            case UpdateState.Downloaded:
+                <div class="text-success font-medium mb-2">Download complete. Ready to install.</div>
+                <button class="btn btn-danger" @onclick="InstallUpdate">Install &amp; Restart</button>
+                break;
+            case UpdateState.Installing:
+                <button class="btn btn-danger" disabled>Installing...</button>
+                break;
+            case UpdateState.UpToDate:
+                <div class="text-secondary mb-2">You're on the latest version.</div>
+                <button class="btn btn-primary" @onclick="CheckForUpdates">Check Again</button>
+                break;
+            case UpdateState.Error:
+                <div class="text-danger mb-2">@_updateErrorMessage</div>
+                <button class="btn btn-primary" @onclick="CheckForUpdates">Retry</button>
+                break;
+        }
+    </div>
+
+    @* Save *@
+    <div class="flex gap-3">
+        <button class="btn btn-primary"
+                @onclick="SaveSettings">Save Settings</button>
+        <button class="btn btn-danger"
+                @onclick="ResetSettings">Reset</button>
+    </div>
+
+</div>
+
+@code {
+    private string ThemeMode = "system";
+    private int _delayBetweenMs = 1000;
+    private int DelayBetweenSeconds { get => _delayBetweenMs / 1000; set => _delayBetweenMs = value * 1000; }
+    private string DefaultPath = "";
+    private string QualityPreset = "best";
+    private static readonly Dictionary<string, (string label, string format)> _qualityPresets = new()
+    {
+        { "best", ("Best quality", "bestvideo[ext=mp4]+bestaudio/bestvideo[ext=mp4]+bestaudio/best") },
+        { "1080p", ("1080p (Full HD)", "bestvideo[height<=1080][ext=mp4]+bestaudio/bestvideo[height<=1080]+bestaudio/best") },
+        { "720p", ("720p (HD)", "bestvideo[height<=720][ext=mp4]+bestaudio/bestvideo[height<=720]+bestaudio/best") },
+        { "480p", ("480p (SD)", "bestvideo[height<=480][ext=mp4]+bestaudio/bestvideo[height<=480]+bestaudio/best") }
+    };
+    private string ExtraArgs = "";
+    private string OutputTemplate = "";
+    private enum UpdateState { Idle, Checking, Available, Downloading, Downloaded, Installing, UpToDate, Error }
+    private UpdateState _updateState;
+    private ReleaseInfo? _updateCheckResult;
+    private int _downloadProgress;
+    private string _updateErrorMessage = "";
+    private string? _ytDlpVersion = "checking...";
+    private bool _ytDlpUpdating;
+    private string? _ytDlpUpdateMessage;
+    private bool _ytDlpUpdateError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSettings();
+        await LoadYtDlpVersion();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await ApplyTheme();
+    }
+
+    private async Task LoadSettings()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+
+        var theme = await db.AppSettings.FindAsync("theme");
+        if (theme != null) ThemeMode = theme.Value;
+
+        var path = await db.AppSettings.FindAsync("defaultPath");
+        if (path != null) DefaultPath = path.Value;
+
+        var delay = await db.AppSettings.FindAsync("delayBetweenMs");
+        if (delay != null && int.TryParse(delay.Value, out var d)) _delayBetweenMs = d;
+
+        var formatKey = await db.AppSettings.FindAsync("ytdlp_format");
+        if (formatKey != null)
+        {
+            var match = _qualityPresets.FirstOrDefault(p => p.Value.format == formatKey.Value);
+            QualityPreset = match.Key ?? "best";
+        }
+
+        var extra = await db.AppSettings.FindAsync("ytdlp_extra_args");
+        if (extra != null) ExtraArgs = extra.Value;
+
+        var template = await db.AppSettings.FindAsync("ytdlp_output_template");
+        if (template != null) OutputTemplate = template.Value;
+    }
+
+    private async Task LoadYtDlpVersion()
+    {
+        var version = await YtDlpUpdateSvc.GetCurrentVersionAsync();
+        if (version != null)
+        {
+            var parts = version.Split('\n');
+            _ytDlpVersion = parts.FirstOrDefault()?.Trim();
+        }
+        else
+        {
+            _ytDlpVersion = null;
+        }
+    }
+
+    private async Task ApplyTheme()
+    {
+        await JS.InvokeVoidAsync("dmftTheme.applyTheme", ThemeMode);
+    }
+
+    private async Task PickFolder()
+    {
+        try
+        {
+            var result = await FolderPicker.Default.PickAsync(CancellationToken.None);
+            if (result.IsSuccessful)
+                DefaultPath = result.Folder.Path;
+        }
+        catch
+        {
+            Toast.Show("Folder picker is not available on this platform", ToastLevel.Error);
+        }
+    }
+
+    private async Task CheckForUpdates()
+    {
+        _updateState = UpdateState.Checking;
+        try
+        {
+            var release = await UpdateSvc.CheckForUpdatesAsync();
+            _updateCheckResult = release;
+            if (release == null || !UpdateSvc.IsUpdateAvailable(release))
+            {
+                _updateState = UpdateState.UpToDate;
+            }
+            else
+            {
+                _updateState = UpdateState.Available;
+            }
+        }
+        catch (Exception ex)
+        {
+            _updateErrorMessage = ex.Message;
+            _updateState = UpdateState.Error;
+            Toast.Show("Failed to check for updates", ToastLevel.Error);
+        }
+    }
+
+    private async Task DownloadUpdate()
+    {
+        if (_updateCheckResult == null) return;
+        _updateState = UpdateState.Downloading;
+        _downloadProgress = 0;
+        try
+        {
+            var progress = new Progress<int>(pct =>
+            {
+                _downloadProgress = pct;
+                InvokeAsync(StateHasChanged);
+            });
+            var path = await UpdateSvc.DownloadUpdateAsync(_updateCheckResult, progress);
+            if (path != null)
+                _updateState = UpdateState.Downloaded;
+            else
+            {
+                _updateErrorMessage = "No suitable asset found for download";
+                _updateState = UpdateState.Error;
+                Toast.Show("Download failed: no asset found", ToastLevel.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _updateErrorMessage = ex.Message;
+            _updateState = UpdateState.Error;
+            Toast.Show($"Download failed: {ex.Message}", ToastLevel.Error);
+        }
+    }
+
+    private async Task InstallUpdate()
+    {
+        _updateState = UpdateState.Installing;
+        try
+        {
+            var launched = await UpdateSvc.InstallUpdateAsync();
+            if (launched)
+            {
+                await Task.Delay(500);
+                Application.Current?.Quit();
+            }
+            else
+            {
+                _updateErrorMessage = "Failed to launch updater";
+                _updateState = UpdateState.Error;
+                Toast.Show("Failed to launch updater", ToastLevel.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _updateErrorMessage = ex.Message;
+            _updateState = UpdateState.Error;
+            Toast.Show($"Install failed: {ex.Message}", ToastLevel.Error);
+        }
+    }
+
+    private async Task UpdateYtDlp()
+    {
+        _ytDlpUpdating = true;
+        _ytDlpUpdateMessage = null;
+        try
+        {
+            var newVersion = await YtDlpUpdateSvc.UpdateAsync();
+            if (newVersion != null)
+            {
+                _ytDlpVersion = newVersion;
+                _ytDlpUpdateMessage = $"Updated to {newVersion}";
+                _ytDlpUpdateError = false;
+                Toast.Show($"yt-dlp updated to {newVersion}", ToastLevel.Success);
+            }
+            else
+            {
+                _ytDlpUpdateMessage = "Update failed";
+                _ytDlpUpdateError = true;
+                Toast.Show("yt-dlp update failed", ToastLevel.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _ytDlpUpdateMessage = ex.Message;
+            _ytDlpUpdateError = true;
+            Toast.Show($"yt-dlp update error: {ex.Message}", ToastLevel.Error);
+        }
+        finally
+        {
+            _ytDlpUpdating = false;
+        }
+    }
+
+    private async Task SaveSettings()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+
+        // Validate ExtraArgs
+        if (!string.IsNullOrWhiteSpace(ExtraArgs))
+        {
+            string[] dangerous = { ";", "|", "`", "$", "&&", "||", "\n" };
+            foreach (var c in dangerous)
+            {
+                if (ExtraArgs.Contains(c))
+                {
+                    Toast.Show($"Extra arguments contain invalid character: {c}", ToastLevel.Error);
+                    return;
+                }
+            }
+        }
+
+        await SetAppSettingAsync(db, "theme", ThemeMode);
+        await SetAppSettingAsync(db, "defaultPath", DefaultPath);
+        await SetAppSettingAsync(db, "delayBetweenMs", _delayBetweenMs.ToString());
+
+        var formatKvp = _qualityPresets[QualityPreset];
+        await SetAppSettingAsync(db, "ytdlp_format", formatKvp.format);
+        await SetAppSettingAsync(db, "ytdlp_extra_args", ExtraArgs);
+        await SetAppSettingAsync(db, "ytdlp_output_template", OutputTemplate);
+
+        var dl = await db.DownloadSettings.FindAsync("default");
+        if (dl == null)
+        {
+            db.DownloadSettings.Add(new DownloadSetting { Id = "default", DefaultPath = DefaultPath });
+        }
+        else
+        {
+            dl.DefaultPath = DefaultPath;
+        }
+
+        await db.SaveChangesAsync();
+        await ApplyTheme();
+        Toast.Show("Settings saved", ToastLevel.Success);
+    }
+
+    private static async Task SetAppSettingAsync(AppDbContext db, string id, string value)
+    {
+        var existing = await db.AppSettings.FindAsync(id);
+        if (existing == null)
+        {
+            db.AppSettings.Add(new AppSetting { Id = id, Value = value });
+        }
+        else
+        {
+            existing.Value = value;
+        }
+    }
+
+    private async Task ResetSettings()
+    {
+        ThemeMode = "system";
+        _delayBetweenMs = 1000;
+        DefaultPath = "%USERPROFILE%\\Music";
+        QualityPreset = "best";
+        ExtraArgs = "--restrict-filenames --no-warnings --embed-thumbnail --retries 3";
+        OutputTemplate = "%(title)s-%(id)s-%(uploader)s.%(ext)s";
+        await ApplyTheme();
+        Toast.Show("Settings reset to defaults", ToastLevel.Info);
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,79 @@
+/* ==========================================================================
+   Button Utility Classes
+   Bootstrap-style btn + btn-outline via Tailwind v4 @utility
+   ========================================================================== */
+
+@utility btn {
+    @apply inline-flex items-center justify-center gap-2 rounded border-0 font-medium no-underline cursor-pointer text-base px-3 py-1.5;
+    transition: filter 0.15s, background-color 0.15s, color 0.15s;
+
+    &:disabled {
+        @apply opacity-50 cursor-not-allowed;
+    }
+}
+
+/* Solid color variants */
+@utility btn-primary {
+    @apply bg-primary text-light hover:brightness-110;
+}
+
+@utility btn-secondary {
+    @apply bg-secondary text-light hover:brightness-110;
+}
+
+@utility btn-success {
+    @apply bg-success text-light hover:brightness-110;
+}
+
+@utility btn-danger {
+    @apply bg-danger text-light hover:brightness-110;
+}
+
+@utility btn-warning {
+    @apply bg-warning text-light hover:brightness-110;
+}
+
+@utility btn-info {
+    @apply bg-info text-light hover:brightness-110;
+}
+
+@utility btn-light {
+    @apply bg-light text-dark hover:brightness-110;
+}
+
+@utility btn-dark {
+    @apply bg-dark text-light hover:brightness-110;
+}
+
+/* Outline color variants */
+@utility btn-outline-primary {
+    @apply border border-primary text-primary bg-transparent hover:bg-primary hover:text-light;
+}
+
+@utility btn-outline-secondary {
+    @apply border border-secondary text-secondary bg-transparent hover:bg-secondary hover:text-light;
+}
+
+@utility btn-outline-success {
+    @apply border border-success text-success bg-transparent hover:bg-success hover:text-light;
+}
+
+@utility btn-outline-danger {
+    @apply border border-danger text-danger bg-transparent hover:bg-danger hover:text-light;
+}
+
+@utility btn-outline-warning {
+    @apply border border-warning text-warning bg-transparent hover:bg-warning hover:text-light;
+}
+
+@utility btn-outline-info {
+    @apply border border-info text-info bg-transparent hover:bg-info hover:text-light;
+}
+
+@utility btn-outline-light {
+    @apply border border-light text-light bg-transparent hover:bg-light hover:text-dark;
+}
+
+@utility btn-outline-dark {
+    @apply border border-dark text-dark bg-transparent hover:bg-dark hover:text-light;
+}

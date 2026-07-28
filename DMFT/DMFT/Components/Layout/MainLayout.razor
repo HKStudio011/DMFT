@@ -1,0 +1,15 @@
+﻿@inherits LayoutComponentBase
+<div class="h-screen w-screen bg-background text-surface" >
+    <div class="flex h-full">
+        <div class="w-64 bg-background shrink-0 border-r border-surface flex flex-col w-25">
+            <NavMenu />
+        </div>
+        <main class="flex-1 overflow-auto">
+            <div class="p-4">
+                @Body
+            </div>
+            <ToastContainer Scope="Main" />
+        </main>
+    </div>
+</div>
+

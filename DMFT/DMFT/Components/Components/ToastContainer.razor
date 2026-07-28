@@ -1,0 +1,44 @@
+@inject ToastService Toast
+@implements IDisposable
+
+<div class="fixed bottom-5 right-5 z-[9999] flex flex-col gap-2 items-end">
+    @foreach (var t in _toasts.Where(x => x.Scope == Scope))
+    {
+        <div class="flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg text-sm @(t.Level == ToastLevel.Error ? "bg-danger text-light" : t.Level == ToastLevel.Success ? "bg-primary text-light" : t.Level == ToastLevel.Warning ? "bg-warning text-light" : "bg-info text-light")" style="min-width: 250px;">
+            <span>@GetIcon(t.Level)</span>
+            <span>@t.Message</span>
+        </div>
+    }
+</div>
+
+@code {
+    private class ToastItem { public string Message { get; set; } = ""; public ToastLevel Level; public Guid Id = Guid.NewGuid(); public string? Scope; }
+    private List<ToastItem> _toasts = new();
+    [Parameter] public string Scope { get; set; } = "Main";
+
+    protected override void OnInitialized() => Toast.OnToast += ShowToast;
+    public void Dispose() => Toast.OnToast -= ShowToast;
+
+    private void ShowToast(string message, ToastLevel level, string? scope)
+    {
+        var t = new ToastItem { Message = message, Level = level, Scope = scope ?? "Main" };
+        _toasts.Add(t);
+        InvokeAsync(StateHasChanged);
+        _ = DismissAfterAsync(t.Id, 3000);
+    }
+
+    private async Task DismissAfterAsync(Guid id, int delayMs)
+    {
+        await Task.Delay(delayMs);
+        var toRemove = _toasts.Find(t => t.Id == id);
+        if (toRemove != null) { _toasts.Remove(toRemove); await InvokeAsync(StateHasChanged); }
+    }
+
+    private string GetIcon(ToastLevel level) => level switch
+    {
+        ToastLevel.Success => "\u2713",
+        ToastLevel.Warning => "!",
+        ToastLevel.Error => "\u2716",
+        _ => "i"
+    };
+}

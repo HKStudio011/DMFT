@@ -1,0 +1,29 @@
+﻿@using System.Reflection
+@using DMFT.Services
+@using DMFT.Utilities
+
+<div class="p-4">
+    <a class="text-xl font-bold text-primary no-underline" href="">DMFT</a>
+</div>
+
+<nav class="flex-1 p-2">
+    <NavLink class="flex items-center gap-3 px-4 py-2.5 rounded text-surface hover:bg-primary hover:text-light no-underline mb-1"
+             href="" Match="NavLinkMatch.All">
+        <span class="w-5 text-center">&#9654;</span>
+        <span>Main</span>
+    </NavLink>
+    <NavLink class="flex items-center gap-3 px-4 py-2.5 rounded text-surface hover:bg-primary hover:text-light no-underline mb-1"
+             href="/history">
+        <span class="w-5 text-center">&#9776;</span>
+        <span>History</span>
+    </NavLink>
+    <NavLink class="flex items-center gap-3 px-4 py-2.5 rounded text-surface hover:bg-primary hover:text-white no-underline mb-1"
+             href="/settings">
+        <span class="w-5 text-center">&#9881;</span>
+        <span>Settings</span>
+    </NavLink>
+</nav>
+
+<div class="p-3 text-xs text-secondary">
+    <span>@TargetPlatform.GetFormFactor() - v@(Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "Unknown")</span>
+</div>

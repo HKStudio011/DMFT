@@ -1,0 +1,68 @@
+name: Build Release
+
+on:
+  release:
+    types: [ published ]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  PROJECT_PATH: DMFT/DMFT/DMFT.csproj
+  OUTPUT_DIR: publish
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install MAUI workload
+        run: dotnet workload install maui
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.PROJECT_PATH }}
+
+      - name: Publish DMFT (Windows)
+        run: |
+          dotnet publish ${{ env.PROJECT_PATH }} `
+            -f net10.0-windows10.0.19041.0 `
+            -c Release `
+            --self-contained `
+            -o ${{ env.OUTPUT_DIR }}
+
+      - name: Sign binaries (optional)
+        if: ${{ secrets.AZURE_KEY_VAULT_URI != '' }}
+        shell: pwsh
+        run: |
+          Write-Host "Signing with Azure Code Signing..."
+          dotnet tool install --global AzureSignTool --version 6.0.1
+          AzureSignTool sign `
+            -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" `
+            -kvi "${{ secrets.AZURE_CLIENT_ID }}" `
+            -kvt "${{ secrets.AZURE_TENANT_ID }}" `
+            -kvs "${{ secrets.AZURE_CLIENT_SECRET }}" `
+            -kvc "${{ secrets.AZURE_CERT_NAME }}" `
+            -tr "http://timestamp.digicert.com" `
+            -v "${{ env.OUTPUT_DIR }}/DMFT.exe" `
+            "${{ env.OUTPUT_DIR }}/DMFT.Updater.exe"
+
+      - name: Package zip
+        shell: pwsh
+        run: |
+          $version = if ("${{ github.event_name }}" -eq "release") {
+            "${{ github.ref_name }}"
+          } else {
+            "$(Get-Date -Format 'yyyyMMdd.HHmm')"
+          }
+          Compress-Archive -Path ${{ env.OUTPUT_DIR }}/* -DestinationPath "DMFT-$version-win.zip"
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        if: github.event_name == 'release'
+        with:
+          files: DMFT-*.zip

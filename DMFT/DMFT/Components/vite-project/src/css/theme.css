@@ -1,0 +1,27 @@
+@theme inline {
+    --color-background: var(--background);
+    --color-surface: var(--surface);
+}
+
+@theme {
+    --color-primary: #007bff;
+    --color-secondary: #6c757d;
+    --color-success: #28a745;
+    --color-danger: #dc3545;
+    --color-warning: #ffda6a;
+    --color-info: #17a2b8;
+    --color-light: #f8f9fa;
+    --color-dark: #343a40;
+}
+
+/* LIGHT THEME (default) */
+:root, [data-theme="light"] {
+    --background: #ffffff;
+    --surface: #141414;
+}
+
+/* DARK THEME */
+[data-theme="dark"] {
+    --background: #141414;
+    --surface: #ffffff;
+}

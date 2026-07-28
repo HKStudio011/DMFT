@@ -1,0 +1,26 @@
+<ModalBase Title="Add Video" @ref="modal">
+    <BodyContent>
+        <textarea class="w-full px-3 py-2 border border-surface rounded bg-background text-surface placeholder-gray-400 focus:ring-2 focus:ring-primary"
+                  @bind="content"
+                  rows="4"
+                  placeholder="Enter video URL (one per line)"></textarea>
+    </BodyContent>
+    <FooterContent>
+        <button class="btn btn-primary" @onclick="Add">Add</button>
+    </FooterContent>
+</ModalBase>
+
+@code {
+    private ModalBase? modal;
+    public string content { get; private set; } = string.Empty;
+    [Parameter] public EventCallback<string> OnAdd { get; set; }
+
+    public void Show() { modal?.Show(); }
+
+    private async Task Add()
+    {
+        modal?.Close();
+        await OnAdd.InvokeAsync(content);
+        content = string.Empty;
+    }
+}

@@ -1,0 +1,28 @@
+@config "../../tailwind.config.js";
+@import "tailwindcss";
+
+
+/* ==========================================================================
+   CSS Priority Order (Lowest → Highest)
+
+   1. Tailwind CSS (imported first - base styles only)
+   2. CSS Variables & Theme
+   3. Utility Classes (@utility - reusable patterns)
+   4. Layout & Utilities
+   5. Component Styles
+   6. Page Styles
+   7. <style> in .razor (component-specific)
+   8. Components/*.razor.css (scoped - keyframes only)
+   ========================================================================== */
+
+/* 1. Base Tailwind - imported first for lowest priority */
+@import "./theme.css";
+@import "./utility.css";
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+}

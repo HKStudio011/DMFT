@@ -1,4 +1,6 @@
 <Solution>
-  <Project Path="DMFT.Tests/DMFT.Tests.csproj" />
-  <Project Path="DMFT/DMFT.csproj" />
+  <Project Path="DMFT.Test.App/DMFT.Test.App.csproj" Id="e67dd6a3-38e3-4704-9bae-3f646ad9b862" />
+  <Project Path="DMFT/DMFT/DMFT.csproj" Id="176c4269-eee0-4ca9-8dcf-edeb61e3b56f">
+    <Deploy Solution="Release|*" />
+  </Project>
 </Solution>

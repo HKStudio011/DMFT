@@ -1,0 +1,104 @@
+@page "/history"
+@inject DownloadService DownloadSvc
+@inject IDbContextFactory<AppDbContext> DbFactory
+
+@rendermode InteractiveRenderSettings.InteractiveServer
+
+<PageTitle>DMFT - History</PageTitle>
+
+<h1 class="text-2xl font-bold text-surface mb-6">Download History</h1>
+
+@if (_items.Count == 0)
+{
+    <div class="text-center py-16 text-secondary">
+        <p class="text-lg">No download history yet.</p>
+    </div>
+}
+else
+{
+    <div class="overflow-x-auto rounded-lg border ">
+        <table class="w-full text-sm bg-background text-surface">
+            <thead class="bg-background text-surface border-b ">
+                <tr>
+                    <th class="text-left px-4 py-3">Platform</th>
+                    <th class="text-left px-4 py-3">Video ID</th>
+                    <th class="text-left px-4 py-3">Status</th>
+                    <th class="text-left px-4 py-3">Created</th>
+                    <th class="text-left px-4 py-3">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in _items.OrderByDescending(x => x.Time))
+                {
+                    <tr class="border-b  hover:bg-surface">
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-0.5 rounded text-xs font-medium text-light bg-primary">@item.Platform</span>
+                        </td>
+                        <td class="px-4 py-3 text-secondary">@item.VideoId</td>
+                        <td class="px-4 py-3">
+                            <span class="text-sm @(item.Status == 4 ? "text-primary" : "text-secondary")">@GetStatusLabel(item.Status)</span>
+                        </td>
+                        <td class="px-4 py-3 text-secondary">@item.Time.ToLocalTime().ToString("g")</td>
+                        <td class="px-4 py-3 flex gap-2">
+                            <button class="btn  btn-primary"
+                                    @onclick="() => RetryAsync(item)">Retry</button>
+                            <button class="btn  btn-danger"
+                                    @onclick="() => DeleteAsync(item)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<DownloadItem> _items = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _items = (await DownloadSvc.GetHistoryAsync()).ToList();
+    }
+
+    private async Task RetryAsync(DownloadItem item)
+    {
+        try
+        {
+            item.Status = StatusCodes.New;
+            item.InHistory = false;
+            item.Time = DateTime.UtcNow;
+            await DownloadSvc.UpdateDownloadAsync(item);
+            Toast.Show($"Restored: {item.VideoId}", ToastLevel.Info);
+        }
+        catch (Exception ex)
+        {
+            Toast.Show($"Error: {ex.Message}", ToastLevel.Error);
+        }
+        await LoadItemsAsync();
+    }
+
+    public async Task LoadItemsAsync()
+    {
+        _items = (await DownloadSvc.GetHistoryAsync()).ToList();
+        StateHasChanged();
+    }
+
+    private async Task DeleteAsync(DownloadItem item)
+    {
+        await DownloadSvc.DeleteDownloadAsync(item.Id);
+        Toast.Show($"Deleted: {item.VideoId}", ToastLevel.Info);
+        await LoadItemsAsync();
+    }
+
+    private static string GetStatusLabel(int status) => status switch
+    {
+        0 => "New",
+        1 => "Waiting",
+        2 => "Downloading",
+        3 => "Canceled",
+        4 => "Completed",
+        99 => "Error",
+        >= 100 => "Error",
+        _ => "Unknown"
+    };
+}
