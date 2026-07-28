@@ -15,7 +15,7 @@ public class DownloadProgress
 public interface IMediaDownloader
 {
     Task DownloadAsync(string videoUrl, string outputPath, bool noWatermark);
-    Task DownloadAudioAsync(string videoUrl, string outputPath);
+    Task DownloadAudioAsync(string videoUrl, string outputPath, string? outputTemplate = null);
     Task CancelAsync();
     Action<DownloadProgress>? OnProgress { get; set; }
 }
@@ -43,12 +43,16 @@ public class YtDlpService : IMediaDownloader
         return RunYtDlpAsync(args);
     }
 
-    public Task DownloadAudioAsync(string videoUrl, string outputPath)
+    public Task DownloadAudioAsync(string videoUrl, string outputPath, string? outputTemplate = null)
     {
         string extra = _config.ExtraArguments;
-        string outputArg = !string.IsNullOrWhiteSpace(_config.OutputTemplate)
-            ? Path.Combine(outputPath, _config.OutputTemplate)
-            : outputPath + Path.DirectorySeparatorChar;
+        string outputArg;
+        if (!string.IsNullOrWhiteSpace(outputTemplate))
+            outputArg = Path.Combine(outputPath, outputTemplate);
+        else if (!string.IsNullOrWhiteSpace(_config.OutputTemplate))
+            outputArg = Path.Combine(outputPath, _config.OutputTemplate);
+        else
+            outputArg = outputPath + Path.DirectorySeparatorChar;
         string args = $"--newline --progress-template \"%(progress)j\" -o \"{outputArg}\" -x --audio-format mp3 --audio-quality 0 {extra} \"{videoUrl}\"".Trim();
         return RunYtDlpAsync(args);
     }

@@ -3,6 +3,7 @@
 @inject IDownloadEngine Engine
 @inject IDownloadQueue Queue
 @inject IDbContextFactory<AppDbContext> DbFactory
+@inject ISoundExtractor SoundExtractor
 @rendermode InteractiveRenderSettings.InteractiveServer
 
 <PageTitle>DMFT - Download</PageTitle>
@@ -36,10 +37,13 @@ else
             <input type="checkbox" class="w-4 h-4 accent-primary" @bind="_setAllAudio" />
             Audio
         </label>
-        <label class="flex items-center gap-1.5 text-sm cursor-pointer select-none">
-            <input type="checkbox" class="w-4 h-4 accent-primary" @bind="_setAllOriginAudio" />
-            Origin Audio
-        </label>
+        @if (_originAudioAvailable)
+        {
+            <label class="flex items-center gap-1.5 text-sm cursor-pointer select-none">
+                <input type="checkbox" class="w-4 h-4 accent-primary" @bind="_setAllOriginAudio" />
+                Origin Audio
+            </label>
+        }
         <button class="btn btn-outline-success"
                 @onclick="ApplyModeToAll">Apply to All</button>
         <button class="btn  btn-outline-primary"
@@ -67,7 +71,7 @@ else
                         <input type="checkbox" class="w-3.5 h-3.5 accent-primary" @bind="item.DownloadAudio" @bind:after="() => DownloadSvc.UpdateDownloadAsync(item)" />
                         Audio
                     </label>
-                    @if (item.Platform != "YouTube")
+                    @if (item.Platform != "YouTube" && _originAudioAvailable)
                     {
                         <label class="flex items-center gap-1 text-xs cursor-pointer select-none">
                             <input type="checkbox" class="w-3.5 h-3.5 accent-primary" @bind="item.DownloadOriginAudio" @bind:after="() => DownloadSvc.UpdateDownloadAsync(item)" />
@@ -127,6 +131,7 @@ else
     private bool _setAllVideo = true;
     private bool _setAllAudio;
     private bool _setAllOriginAudio;
+    private bool _originAudioAvailable;
 
     protected override async Task OnInitializedAsync()
     {
@@ -142,6 +147,7 @@ else
             }
         });
         Queue.OnQueueUpdated += () => InvokeAsync(LoadItems);
+        _originAudioAvailable = await SoundExtractor.CheckAvailableAsync();
         await LoadItems();
     }
 
@@ -228,7 +234,7 @@ else
 
     private async Task ClearAllAsync()
     {
-        await DownloadSvc.ClearDownloadsAsync(x => x.Status == StatusCodes.New && !x.InHistory);
+        await DownloadSvc.ClearDownloadsAsync(x => (x.Status == StatusCodes.New || x.Status == StatusCodes.Canceled || x.Status >= 99) && !x.InHistory);
         Toast.Show("Cleared all new items", ToastLevel.Info);
         await LoadItems();
     }

@@ -61,7 +61,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IMediaDownloader, YtDlpService>();
         builder.Services.AddSingleton<IYtDlpUpdateService, YtDlpUpdateService>();
         builder.Services.AddSingleton<IDownloadEngine, DownloadEngine>();
-        builder.Services.AddSingleton<ITikTokSoundExtractor, TikTokSoundExtractor>();
+        builder.Services.AddSingleton<ISoundExtractor, SoundExtractor>();
         builder.Services.AddSingleton<IDownloadQueue, DownloadQueue>();
         builder.Services.AddSingleton<ToastService>();
 

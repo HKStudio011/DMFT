@@ -13,15 +13,17 @@ public class DownloadEngine : IDownloadEngine
 {
     private readonly IMediaDownloader _mediaDownloader;
     private readonly DownloadService _downloadService;
-    private readonly ITikTokSoundExtractor _soundExtractor;
+    private readonly ISoundExtractor _soundExtractor;
+    private readonly ToastService _toast;
     private DownloadItem? _currentItem;
     public event Action<DownloadItem>? OnItemProgress;
 
-    public DownloadEngine(IMediaDownloader mediaDownloader, DownloadService downloadService, ITikTokSoundExtractor soundExtractor)
+    public DownloadEngine(IMediaDownloader mediaDownloader, DownloadService downloadService, ISoundExtractor soundExtractor, ToastService toast)
     {
         _mediaDownloader = mediaDownloader;
         _downloadService = downloadService;
         _soundExtractor = soundExtractor;
+        _toast = toast;
         _mediaDownloader.OnProgress += HandleProgress;
     }
 
@@ -58,13 +60,45 @@ public class DownloadEngine : IDownloadEngine
 
             if (mode.HasFlag(DownloadMode.OriginAudio))
             {
-                var (soundName, soundUrl) = await _soundExtractor.GetOriginalSoundAsync(item.Url);
-                if (!string.IsNullOrWhiteSpace(soundUrl))
+                if (!await _soundExtractor.CheckAvailableAsync())
                 {
-                    item.OriginalSoundName = soundName ?? "";
-                    item.OriginalSoundUrl = soundUrl;
-                    item.OriginalUrl = item.Url;
-                    await _downloadService.UpdateDownloadAsync(item);
+                    _toast.Show("Origin Audio: no browser available (Chrome/Edge/Firefox)", ToastLevel.Error);
+                    throw new Exception("Origin Audio requires Chrome, Edge, or Firefox browser");
+                }
+
+                if (item.Platform == "YouTubeShorts")
+                {
+                    var soundUrl = await _soundExtractor.GetOriginalSoundYTShortAsync(item.Url);
+                    if (!string.IsNullOrWhiteSpace(soundUrl))
+                    {
+                        item.OriginalSoundUrl = soundUrl;
+                        item.OriginalUrl = item.Url;
+                        await _downloadService.UpdateDownloadAsync(item);
+                        _toast.Show("Found origin audio for YT Shorts", ToastLevel.Info);
+                    }
+                    else
+                    {
+                        _toast.Show("Could not extract origin audio from this YT Shorts video", ToastLevel.Warning);
+                        throw new Exception("Could not extract origin audio");
+                    }
+                }
+                else
+                {
+                    var (soundName, soundUrl, videoId) = await _soundExtractor.GetOriginalSoundTiktokAsync(item.Url);
+                    if (!string.IsNullOrWhiteSpace(soundUrl))
+                    {
+                        item.OriginalSoundName = soundName ?? "";
+                        item.OriginalSoundUrl = soundUrl;
+                        item.OriginalUrl = item.Url;
+                        item.VideoId = videoId ?? item.VideoId;
+                        await _downloadService.UpdateDownloadAsync(item);
+                        _toast.Show($"Found origin audio: {soundName ?? "unknown"}", ToastLevel.Info);
+                    }
+                    else
+                    {
+                        _toast.Show("Could not extract origin audio from this video", ToastLevel.Warning);
+                        throw new Exception("Could not extract origin audio");
+                    }
                 }
             }
 
@@ -77,7 +111,16 @@ public class DownloadEngine : IDownloadEngine
                 tasks.Add(_mediaDownloader.DownloadAudioAsync(item.Url, destDir));
 
             if (mode.HasFlag(DownloadMode.OriginAudio) && !string.IsNullOrWhiteSpace(item.OriginalSoundUrl))
-                tasks.Add(_mediaDownloader.DownloadAudioAsync(item.OriginalSoundUrl, destDir));
+            {
+                if (item.Platform == "YouTubeShorts")
+                    tasks.Add(_mediaDownloader.DownloadAudioAsync(item.OriginalSoundUrl, destDir));
+                else
+                {
+                    var safeName = SanitizeFilename(item.OriginalSoundName);
+                    var template = $"{safeName}-{item.VideoId}.%(ext)s";
+                    tasks.Add(_mediaDownloader.DownloadAudioAsync(item.OriginalSoundUrl, destDir, template));
+                }
+            }
 
             if (tasks.Count == 0)
                 throw new Exception("No download tasks selected");
@@ -106,5 +149,12 @@ public class DownloadEngine : IDownloadEngine
     public async Task CancelDownloadAsync(DownloadItem item)
     {
         await _mediaDownloader.CancelAsync();
+    }
+
+    private static string SanitizeFilename(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "unknown";
+        var invalid = Path.GetInvalidFileNameChars();
+        return string.Join("_", name.Split(invalid, StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.');
     }
 }
