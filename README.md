@@ -39,17 +39,16 @@
 
 ## ⚙️ Yêu cầu hệ thống
 
-- .NET **10.0 SDK** + MAUI workload
+- .NET **10.0 Runtime**
 - **yt-dlp** — tự động dò theo thứ tự: AppData → `./yt-dlp/` → PATH
 - **Playwright browsers** (cho Origin Audio):
   ```bash
   pwsh bin/Debug/net10.0/playwright.ps1 install chromium
   ```
-- Node.js 20+ (cho frontend build)
 
 ## 🚀 Cài đặt & chạy
 
-### Khôi phục & build
+### Build (yêu cầu .NET 10.0 SDK + MAUI workload + Node.js 20+)
 
 ```bash
 dotnet restore DMFT.slnx

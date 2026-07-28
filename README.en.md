@@ -39,17 +39,16 @@ It features a modern web-based UI (Tailwind CSS v4), download queue, history man
 
 ## ⚙️ System Requirements
 
-- .NET **10.0 SDK** + MAUI workload
+- .NET **10.0 Runtime**
 - **yt-dlp** — auto-resolved: AppData → `./yt-dlp/` → PATH
 - **Playwright browsers** (for Origin Audio):
   ```bash
   pwsh bin/Debug/net10.0/playwright.ps1 install chromium
   ```
-- Node.js 20+ (for frontend build)
 
 ## 🚀 Setup & Run
 
-### Restore & build
+### Build (requires .NET 10.0 SDK + MAUI workload + Node.js 20+)
 
 ```bash
 dotnet restore DMFT.slnx
