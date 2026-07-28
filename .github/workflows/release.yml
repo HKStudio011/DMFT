@@ -25,7 +25,10 @@ jobs:
         run: dotnet workload install maui
 
       - name: Restore dependencies
-        run: dotnet restore DMFT.slnx --runtime win-x64
+        run: dotnet restore ${{ env.PROJECT_PATH }}
+
+      - name: Restore DMFT.Updater with RID
+        run: dotnet restore DMFT.Updater/DMFT.Updater.csproj --runtime win-x64
 
       - name: Publish DMFT (Windows)
         run: |
