@@ -194,7 +194,12 @@ else
         if (_setAllAudio) mode |= (int)DownloadMode.Audio;
         if (_setAllOriginAudio) mode |= (int)DownloadMode.OriginAudio;
         foreach (var item in _items)
-            item.DownloadMode = mode;
+        {
+            var itemMode = mode;
+            if (item.Platform == "YouTube")
+                itemMode &= ~(int)DownloadMode.OriginAudio;
+            item.DownloadMode = itemMode;
+        }
         await DownloadSvc.UpdateDownloadAllAsync(_items);
         Toast.Show($"Applied mode to all {_items.Count} item(s)", ToastLevel.Info);
     }
@@ -220,7 +225,7 @@ else
 
     private async Task DownloadAllAsync()
     {
-        var newItems = _items.Where(x => x.Status == StatusCodes.New).ToList();
+        var newItems = _items.Where(x => !x.InHistory).ToList();
         if (newItems.Count == 0)
         {
             Toast.Show("No new items to download", ToastLevel.Info);

@@ -7,6 +7,7 @@ public interface ISoundExtractor
     Task<(string? soundName, string? soundUrl, string? videoId)> GetOriginalSoundTiktokAsync(string videoUrl);
     Task<string?> GetOriginalSoundYTShortAsync(string videoUrl);
     Task<bool> CheckAvailableAsync();
+    Task CancelAsync();
 }
 
 public class SoundExtractor : ISoundExtractor
