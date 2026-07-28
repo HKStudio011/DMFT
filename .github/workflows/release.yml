@@ -38,6 +38,10 @@ jobs:
             --self-contained `
             -o ${{ env.OUTPUT_DIR }}
 
+      - name: Copy DMFT.Updater
+        shell: pwsh
+        run: Copy-Item "DMFT.Updater/bin/Release/net10.0/DMFT.Updater.exe" -Destination "${{ env.OUTPUT_DIR }}/DMFT.Updater.exe"
+
       - name: Sign binaries (optional)
         if: env.HAS_AZURE_SECRETS == 'true'
         env:
