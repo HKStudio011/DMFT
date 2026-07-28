@@ -38,10 +38,10 @@ public class VideoLinkParser : IVideoLinkParser
         if (string.IsNullOrWhiteSpace(url)) return VideoPlatform.Unknown;
         if (url.Contains("tiktok.com", StringComparison.OrdinalIgnoreCase))
             return VideoPlatform.TikTok;
-        if (url.Contains("youtube.com/shorts/", StringComparison.OrdinalIgnoreCase) ||
-            url.Contains("youtu.be/", StringComparison.OrdinalIgnoreCase))
+        if (url.Contains("youtube.com/shorts/", StringComparison.OrdinalIgnoreCase))
             return VideoPlatform.YouTubeShorts;
-        if (url.Contains("youtube.com/watch", StringComparison.OrdinalIgnoreCase))
+        if (url.Contains("youtube.com/watch", StringComparison.OrdinalIgnoreCase) ||
+            url.Contains("youtu.be/", StringComparison.OrdinalIgnoreCase))
             return VideoPlatform.YouTube;
         return VideoPlatform.Unknown;
     }
