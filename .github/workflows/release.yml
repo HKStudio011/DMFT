@@ -25,7 +25,7 @@ jobs:
         run: dotnet workload install maui
 
       - name: Restore dependencies
-        run: dotnet restore ${{ env.PROJECT_PATH }}
+        run: dotnet restore DMFT.slnx
 
       - name: Publish DMFT (Windows)
         run: |
