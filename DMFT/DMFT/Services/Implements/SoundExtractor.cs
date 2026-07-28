@@ -70,11 +70,11 @@ public class SoundExtractor : ISoundExtractor
 
     public async Task<string?> GetOriginalSoundYTShortAsync(string videoUrl)
     {
-        using var playwright = await Microsoft.Playwright.Playwright.CreateAsync();
-        await using var browser = await TryLaunchAsync(playwright, headless: false);
-        if (browser == null) return null;
+        _currentPlaywright = await Microsoft.Playwright.Playwright.CreateAsync();
+        _currentBrowser = await TryLaunchAsync(_currentPlaywright, headless: false);
+        if (_currentBrowser == null) return null;
 
-        var page = await browser.NewPageAsync();
+        var page = await _currentBrowser.NewPageAsync();
         await page.GotoAsync(videoUrl);
         await page.WaitForLoadStateAsync(LoadState.NetworkIdle | LoadState.DOMContentLoaded);
 
