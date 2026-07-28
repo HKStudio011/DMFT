@@ -27,8 +27,8 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore ${{ env.PROJECT_PATH }}
 
-      - name: Restore DMFT.Updater with RID
-        run: dotnet restore DMFT.Updater/DMFT.Updater.csproj --runtime win-x64
+      - name: Build DMFT.Updater
+        run: dotnet build DMFT.Updater/DMFT.Updater.csproj -c Release
 
       - name: Publish DMFT (Windows)
         run: |
