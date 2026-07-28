@@ -53,7 +53,15 @@ public class DownloadQueue : IDownloadQueue
                 if (item == null || item.Status == StatusCodes.New) continue;
                 item.Status = StatusCodes.Downloading;
                 OnQueueUpdated?.Invoke();
-                await _engine.StartDownloadAsync(item);
+                try
+                {
+                    await _engine.StartDownloadAsync(item);
+                }
+                catch
+                {
+                    item.Status = StatusCodes.Error;
+                    await _downloadService.UpdateDownloadAsync(item);
+                }
                 OnQueueUpdated?.Invoke();
                 await Task.Delay(DelayBetweenMs);
             }

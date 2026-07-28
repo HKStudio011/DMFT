@@ -71,7 +71,7 @@ else
                         <input type="checkbox" class="w-3.5 h-3.5 accent-primary" @bind="item.DownloadAudio" @bind:after="() => DownloadSvc.UpdateDownloadAsync(item)" />
                         Audio
                     </label>
-                    @if (item.Platform != "YouTube" && _originAudioAvailable)
+                    @if (_originAudioAvailable && item.Platform is "TikTok" or "YouTubeShorts")
                     {
                         <label class="flex items-center gap-1 text-xs cursor-pointer select-none">
                             <input type="checkbox" class="w-3.5 h-3.5 accent-primary" @bind="item.DownloadOriginAudio" @bind:after="() => DownloadSvc.UpdateDownloadAsync(item)" />
@@ -196,7 +196,7 @@ else
         foreach (var item in _items)
         {
             var itemMode = mode;
-            if (item.Platform == "YouTube")
+            if (item.Platform is not "TikTok" and not "YouTubeShorts")
                 itemMode &= ~(int)DownloadMode.OriginAudio;
             item.DownloadMode = itemMode;
         }

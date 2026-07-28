@@ -112,6 +112,12 @@ public class DownloadEngine : IDownloadEngine
 
             if (mode.HasFlag(DownloadMode.OriginAudio) && !string.IsNullOrWhiteSpace(item.OriginalSoundUrl))
             {
+                if (item.Platform is not "TikTok" and not "YouTubeShorts")
+                {
+                    _toast.Show("Origin Audio not supported for this platform", ToastLevel.Warning);
+                    throw new Exception("Origin Audio not supported for this platform");
+                }
+
                 if (item.Platform == "YouTubeShorts")
                     tasks.Add(_mediaDownloader.DownloadAudioAsync(item.OriginalSoundUrl, destDir));
                 else
@@ -130,7 +136,7 @@ public class DownloadEngine : IDownloadEngine
             item.Status = StatusCodes.Success;
             await _downloadService.MoveToHistoryAsync(item);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             if (mode.HasFlag(DownloadMode.Video) && mode.HasFlag(DownloadMode.OriginAudio) && !mode.HasFlag(DownloadMode.Audio))
                 item.Status = StatusCodes.VideoAudioOriginError;
@@ -142,6 +148,7 @@ public class DownloadEngine : IDownloadEngine
                 item.Status = StatusCodes.AudioOriginError;
             else
                 item.Status = StatusCodes.Error;
+            _toast.Show($"Download failed: {ex.Message}", ToastLevel.Error);
             await _downloadService.UpdateDownloadAsync(item);
         }
     }
