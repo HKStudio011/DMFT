@@ -36,7 +36,7 @@ jobs:
             -o ${{ env.OUTPUT_DIR }}
 
       - name: Sign binaries (optional)
-        if: ${{ secrets.AZURE_KEY_VAULT_URI != '' }}
+        if: secrets.AZURE_KEY_VAULT_URI != ''
         shell: pwsh
         run: |
           Write-Host "Signing with Azure Code Signing..."
