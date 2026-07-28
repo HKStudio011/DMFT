@@ -113,16 +113,6 @@ DMFT.slnx
 └── docs/                                # Tài liệu
 ```
 
-## 🔧 Cấu hình nâng cao
-
-- **Thư mục lưu mặc định**: Cài đặt trong **Settings**, fallback `%USERPROFILE%\Music`
-- **Delay giữa các lần tải**: Mặc định 2000ms, cấu hình trong Settings
-- **DownloadMode flags**:
-  - `Video = 1`
-  - `Audio = 2`
-  - `OriginAudio = 4`
-- **Origin Audio** chỉ hỗ trợ trên TikTok và YouTube Shorts (cần Playwright browser)
-
 ## 📦 Công nghệ sử dụng
 
 - [.NET 10 / MAUI](https://dotnet.microsoft.com/) — Cross-platform framework

@@ -118,16 +118,6 @@ DMFT.slnx
 └── docs/                                # Documentation
 ```
 
-## 🔧 Advanced Configuration
-
-- **Default save path**: Configured in **Settings**, fallback `%USERPROFILE%\Music`
-- **Inter-download delay**: Default 2000ms, configurable in Settings
-- **DownloadMode flags**:
-  - `Video = 1`
-  - `Audio = 2`
-  - `OriginAudio = 4`
-- **Origin Audio** is only supported on TikTok and YouTube Shorts (requires Playwright browser)
-
 ## 📦 Tech Stack
 
 - [.NET 10 / MAUI](https://dotnet.microsoft.com/) — Cross-platform framework
