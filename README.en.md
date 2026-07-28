@@ -128,15 +128,6 @@ DMFT.slnx
   - `OriginAudio = 4`
 - **Origin Audio** is only supported on TikTok and YouTube Shorts (requires Playwright browser)
 
-## 🛠 Troubleshooting
-
-| Issue | Cause | Fix |
-|-------|-------|-----|
-| yt-dlp not found | yt-dlp not installed | Place `yt-dlp.exe` in `%AppData%/DMFT/yt-dlp/` or `./yt-dlp/` |
-| Origin Audio fails | Playwright browser missing | Run `playwright.ps1 install chromium` |
-| EF Core migration error | Corrupted old DB | Delete `dmft.db` in AppData, restart (auto-migrates) |
-| Frontend not updating | CSS/JS not rebuilt | Run `npm run build` in `vite-project/` |
-
 ## 📦 Tech Stack
 
 - [.NET 10 / MAUI](https://dotnet.microsoft.com/) — Cross-platform framework

@@ -40,15 +40,10 @@
 ## ⚙️ Yêu cầu hệ thống
 
 - .NET **10.0 Runtime**
-- **yt-dlp** — tự động dò theo thứ tự: AppData → `./yt-dlp/` → PATH
-- **Playwright browsers** (cho Origin Audio):
-  ```bash
-  pwsh bin/Debug/net10.0/playwright.ps1 install chromium
-  ```
 
-## 🚀 Cài đặt & chạy
+## 🚀 Build (yêu cầu .NET 10.0 SDK + MAUI workload + Node.js 20+)
 
-### Build (yêu cầu .NET 10.0 SDK + MAUI workload + Node.js 20+)
+### ### Restore & build
 
 ```bash
 dotnet restore DMFT.slnx
@@ -127,15 +122,6 @@ DMFT.slnx
   - `Audio = 2`
   - `OriginAudio = 4`
 - **Origin Audio** chỉ hỗ trợ trên TikTok và YouTube Shorts (cần Playwright browser)
-
-## 🛠 Troubleshooting
-
-| Vấn đề | Nguyên nhân | Cách khắc phục |
-|--------|-------------|----------------|
-| Không tìm thấy yt-dlp | yt-dlp chưa được cài | Đặt `yt-dlp.exe` trong `%AppData%/DMFT/yt-dlp/` hoặc `./yt-dlp/` |
-| Origin Audio không hoạt động | Thiếu Playwright browser | Chạy `playwright.ps1 install chromium` |
-| Lỗi EF Core migration | DB cũ bị lỗi | Xóa `dmft.db` trong AppData, khởi động lại (auto-migrate) |
-| Frontend không cập nhật | Chưa build CSS/JS | `npm run build` trong `vite-project/` |
 
 ## 📦 Công nghệ sử dụng
 
