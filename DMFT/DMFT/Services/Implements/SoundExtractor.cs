@@ -39,6 +39,15 @@ public class SoundExtractor : ISoundExtractor
         return _available.Value;
     }
 
+    public Task CancelAsync()
+    {
+        try { _currentBrowser?.CloseAsync().GetAwaiter().GetResult(); } catch { }
+        try { _currentPlaywright?.Dispose(); } catch { }
+        _currentBrowser = null;
+        _currentPlaywright = null;
+        return Task.CompletedTask;
+    }
+
     public async Task<(string? soundName, string? soundUrl, string? videoId)> GetOriginalSoundTiktokAsync(string videoUrl)
     {
         _parser.TryParseVideoId(videoUrl, out var videoId);
