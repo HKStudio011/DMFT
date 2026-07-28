@@ -25,7 +25,7 @@ jobs:
         run: dotnet workload install maui
 
       - name: Restore dependencies
-        run: dotnet restore DMFT.slnx
+        run: dotnet restore DMFT.slnx --runtime win-x64
 
       - name: Publish DMFT (Windows)
         run: |
