@@ -74,7 +74,7 @@ jobs:
           Compress-Archive -Path ${{ env.OUTPUT_DIR }}/* -DestinationPath "DMFT-$version-win.zip"
 
       - name: Upload Release Asset
-        uses: softprops/action-gh-release@v2
-        if: github.event_name == 'release'
-        with:
-          files: DMFT-*.zip
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload v2.0.0 DMFT-*.zip --clobber
