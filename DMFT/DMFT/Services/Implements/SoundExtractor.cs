@@ -14,6 +14,8 @@ public class SoundExtractor : ISoundExtractor
 {
     private readonly IVideoLinkParser _parser;
     private bool? _available;
+    private IPlaywright? _currentPlaywright;
+    private Microsoft.Playwright.IBrowser? _currentBrowser;
 
     public SoundExtractor(IVideoLinkParser parser)
     {
@@ -40,11 +42,11 @@ public class SoundExtractor : ISoundExtractor
     public async Task<(string? soundName, string? soundUrl, string? videoId)> GetOriginalSoundTiktokAsync(string videoUrl)
     {
         _parser.TryParseVideoId(videoUrl, out var videoId);
-        using var playwright = await Microsoft.Playwright.Playwright.CreateAsync();
-        await using var browser = await TryLaunchAsync(playwright, headless: false);
-        if (browser == null) return (null, null, videoId);
+        _currentPlaywright = await Microsoft.Playwright.Playwright.CreateAsync();
+        _currentBrowser = await TryLaunchAsync(_currentPlaywright, headless: false);
+        if (_currentBrowser == null) return (null, null, videoId);
 
-        var page = await browser.NewPageAsync();
+        var page = await _currentBrowser.NewPageAsync();
         await page.GotoAsync(videoUrl);
         await page.WaitForLoadStateAsync(LoadState.NetworkIdle | LoadState.DOMContentLoaded);
         await page.WaitForSelectorAsync("a[href^='/music/']", new() { Timeout = 300_000 });
