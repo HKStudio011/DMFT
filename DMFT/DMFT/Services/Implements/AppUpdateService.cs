@@ -154,8 +154,7 @@ public class AppUpdateService : IAppUpdateService
                 FileName = updaterPath,
                 Arguments = $"--zip \"{DownloadedZipPath}\" --pid {currentPid} --app-dir \"{appDir}\"",
                 UseShellExecute = true,
-                CreateNoWindow = true,
-                WindowStyle = ProcessWindowStyle.Hidden
+                WindowStyle = ProcessWindowStyle.Normal
             };
 
             Process.Start(psi);

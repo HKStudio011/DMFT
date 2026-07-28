@@ -328,7 +328,7 @@
             if (launched)
             {
                 await Task.Delay(500);
-                Application.Current?.Quit();
+                Environment.Exit(0);
             }
             else
             {
